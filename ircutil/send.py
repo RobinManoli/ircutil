@@ -44,8 +44,8 @@ class Send():
     def notice(self, chat, msg):
         self.raw('NOTICE %s :%s' % (chat, msg) )
 
-    def nick(self, nick='ircDotPy'):
-        self.raw('NICK %s' % str(nick) or 'ircDotPy')
+    def nick(self, nick=''):
+        self.raw('NICK %s' % str(nick) or 'ircutil')
 
     def op(self, chan, nick):
         self.mode( '+o', chan, nick )
@@ -76,8 +76,8 @@ class Send():
     def unban(self, chan, mask):
         self.mode( '-b', chan, mask )
 
-    def user(self, ident='ircDotPy', hostname='ircDotPy',
-             servername='ircDotPy', realname='ircDotPy'):
+    def user(self, ident='ircutil', hostname='ircutil',
+             servername='ircutil', realname='ircutil for easy coding irc in python'):
         self.raw('USER %s %s %s :%s' % (ident, hostname, servername, realname))
 
     def quit(self, msg=''):

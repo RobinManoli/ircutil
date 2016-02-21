@@ -6,10 +6,10 @@ from ircutil.event import Event
 
 class Connection():
     def __init__(self):
-        self.nick = "ircDotPy" # main nick
+        self.nick = "ircutil" # main nick
         self._nick = self.nick # current nick
-        self.ident = "ircDotPy"
-        self.realname = "irc.py for coding irc in python"
+        self.ident = "ircutil"
+        self.realname = "ircutil for easy coding irc in python"
         self.server = "irc.freenode.net" # main server
         self._server = '' # current server
         #self.__server = '' # last server # not used until mature decision
@@ -45,9 +45,9 @@ class Connection():
         self.unban = self.send.unban
         self.quit = self.send.quit
 
-        self.hostname = 'ircDotPy' # relevant for irc-servers, not clients
-        self.servername = 'ircDotPy' # relevant for irc-servers, not clients
-        self._version = "irc.py 1.0"
+        self.hostname = 'ircutil' # relevant for irc-servers, not clients
+        self.servername = 'ircutil' # relevant for irc-servers, not clients
+        self._version = "python ircutil alpha"
 
     def _loop(self):
         while True:

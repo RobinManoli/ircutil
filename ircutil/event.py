@@ -3,38 +3,38 @@ IRC REFERENCE
 -------------
 
 JOIN
-	:nick!~ircDotPy@example.com JOIN #leveluplife
+	:nick!~ircutil@example.com JOIN #leveluplife
 	# on join
 	:kornbluth.freenode.net 332 nick #leveluplife :new
-	:kornbluth.freenode.net 333 nick #leveluplife nick!~ircDotPy@example.com 1455354288
+	:kornbluth.freenode.net 333 nick #leveluplife nick!~ircutil@example.com 1455354288
 	:kornbluth.freenode.net 353 nick @ #leveluplife :nick @nick2
 	:kornbluth.freenode.net 366 nick #leveluplife :End of /NAMES list.
 
 MODE
-	:nick!~ircDotPy@example.com MODE #leveluplife +oo nick nick2
-	:nick!~ircDotPy@example.com MODE #leveluplife +p 
-	:nick!~ircDotPy@example.com MODE #leveluplife +b *!q@z
+	:nick!~ircutil@example.com MODE #leveluplife +oo nick nick2
+	:nick!~ircutil@example.com MODE #leveluplife +p 
+	:nick!~ircutil@example.com MODE #leveluplife +b *!q@z
 	:nick MODE nick :+i
 
 
 NICK
-	:nick!~ircDotPy@example.com NICK :newnick
+	:nick!~ircutil@example.com NICK :newnick
 PRIVMSG
-	:nick!~ircDotPy@example.com PRIVMSG #leveluplife :message text
+	:nick!~ircutil@example.com PRIVMSG #leveluplife :message text
 NOTICE
-	:nick!~ircDotPy@example.com NOTICE #leveluplife :hi
-	:nick!~ircDotPy@example.com NOTICE nick :yo
+	:nick!~ircutil@example.com NOTICE #leveluplife :hi
+	:nick!~ircutil@example.com NOTICE nick :yo
 TOPIC
-	:nick!~ircDotPy@example.com TOPIC #leveluplife :topic text
+	:nick!~ircutil@example.com TOPIC #leveluplife :topic text
 KICK
-	:nick!~ircDotPy@example.com KICK #leveluplife nick :kick message
+	:nick!~ircutil@example.com KICK #leveluplife nick :kick message
 
 PART
-	:nick!~ircDotPy@example.com PART #leveluplife
-	:nick!~ircDotPy@example.com PART #leveluplife :"part message"
+	:nick!~ircutil@example.com PART #leveluplife
+	:nick!~ircutil@example.com PART #leveluplife :"part message"
 
 QUIT
-	:nick!~ircDotPy@example.com QUIT :Quit: What's Your Earth Mission?
+	:nick!~ircutil@example.com QUIT :Quit: What's Your Earth Mission?
 """
 
 class Event():
@@ -99,7 +99,6 @@ class Event():
         self.chan = ''
         self.chat = ''
         self.cmd = ''
-        self.ctcp = ''
         self.host = ''
         self.ident = ''
         self.mode = ''
@@ -177,9 +176,9 @@ class Event():
 
             elif self.cmd == 'MODE':
                 # :nick!ident@host MODE nick|chan [+|-A][B][C][-|+D][E][F] [Atarget][Btarget]...
-                # :nick!ident@example.com MODE #irc.py +oo nick nick2
-                # :nick!ident@example.com MODE #irc.py +p 
-                # :nick!identy@example.com MODE #irc.py +b *!b@z
+                # :nick!ident@example.com MODE #ircutil +oo nick nick2
+                # :nick!ident@example.com MODE #ircutil +p 
+                # :nick!identy@example.com MODE #ircutil +b *!b@z
                 self.chan = self.arg2
                 self.chat = self.chan or self.nick
                 self.mode = self.arg3.lstrip(':')
@@ -245,7 +244,7 @@ class Event():
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
-                    #self.ctcp = self.arg3.upper().lstrip(':').strip( chr(1) ) # depr
+                    self.msg = self.arg3.upper().lstrip(':').strip( chr(1) )
                     if self.arg1 == 'PRIVMSG':
                         self.type = 'CTCP'
                         if self.msg == 'VERSION':
