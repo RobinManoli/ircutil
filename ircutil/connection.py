@@ -13,7 +13,7 @@ class Connection():
         self.server = "irc.freenode.net" # main server
         self._server = '' # current server
         #self.__server = '' # last server # not used until mature decision
-		self.ipv6 = False
+        self.ipv6 = False # hi
 
         self.nicks = [] # list of alternative nicks
         self.servers = [] # list of alternative servers with optional ports
