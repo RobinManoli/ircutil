@@ -244,7 +244,7 @@ class Event():
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
-                    self.msg = self.arg3.upper().lstrip(':').strip( chr(1) )
+                    self.msg = self.arg3.lstrip(':').strip( chr(1) )
                     if self.arg1 == 'PRIVMSG':
                         self.type = 'CTCP'
                         if self.msg == 'VERSION':
