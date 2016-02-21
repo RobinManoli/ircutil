@@ -74,8 +74,8 @@ class Event():
         self.triggers = connection.triggers
 
         #raw_event = raw_event.rstrip('\r') # remove possible \r (in non EFNet)
-		# clean event data (if it comes from echo it might contains new lines, and also if it's non efnet it contains them)
-		raw_event = raw_event.replace('\r', '').replace('\n', '')
+        # clean event data (if it comes from echo it might contains new lines, and also if it's non efnet it contains them)
+        raw_event = raw_event.replace('\r', '').replace('\n', '')
         self.raw = raw_event
         self.split = raw_event.split()
         if not self.split:
