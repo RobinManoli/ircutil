@@ -1,5 +1,5 @@
 import sys
-from irc.event import Event
+from ircutil.event import Event
 
 class Send():
     def __init__(self, connection):
