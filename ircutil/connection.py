@@ -1,7 +1,7 @@
 import sys
 import socket
-from irc.send import Send
-from irc.event import Event
+from ircutil.send import Send
+from ircutil.event import Event
 
 
 class Connection():
