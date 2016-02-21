@@ -1,4 +1,4 @@
-from irc.connection import Connection
+from ircutil.connection import Connection
 
 # IRC EVENTS
 ACTION = 'ACTION'
