@@ -17,6 +17,7 @@ class Connection():
 
         self.nicks = [] # list of alternative nicks
         self.servers = [] # list of alternative servers with optional ports
+        self.chans = {} # keeps records of channel users, topics and modes
 
         self.triggers = [] # list of functions to run on each irc event
         self._connected = False
@@ -47,7 +48,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil alpha"
+        self._version = "python ircutil 0.7 alpha"
 
     def _loop(self):
         while True:
@@ -81,6 +82,7 @@ class Connection():
             import sys
             self.echo( 'Running Python ' + str(sys.version) )
 
+            self.chans = {} # clear chans on reconnects
             server_split = server.split(':')
             server = server_split[0]
             port = server_split[1] if len(server_split) > 1 else '6667'

@@ -5,18 +5,18 @@ mybot.nick = "ezBot" # main nick
 mybot.server = "irc.freenode.org" # main server
 
 def raw(event):
-    "See everything from irc server and irc.py."
+    "See everything from irc server and ircutil"
     print (event.raw)
 mybot.triggers.append(raw)
 
 def autojoin(event):
     "Join a channel when connected and ready."
-    if event.type == irc.READY:
-        mybot.join('#irc.py')
+    if event.type == 'READY':
+        mybot.join('#ircutil')
 mybot.triggers.append(autojoin)
 
 def respond(event):
-    if event.type == irc.MSG and event.msg == ("hi"):
+    if event.type == 'MSG' and event.msg == "hi":
         mybot.msg(chat=event.chat, msg="%s: hi" %event.nick)
 mybot.triggers.append(respond)
 

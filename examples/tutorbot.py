@@ -23,30 +23,30 @@ mybot.servers = ['irc.freenode.net:6666', 'irc.freenode.org']
 
 # TRIGGER EXAMPLES
 def raw(event):
-    "See everything from irc server and irc.py."
+    "See everything from irc server and ircutil."
     print (event.raw)
 mybot.triggers.append(raw)
 
 def slave(event):
     """
     Perform raw IRC commands that owner sends in private such as
-    '!do JOIN #irc.py".
+    '!do JOIN #ircutil".
 
     Explicitly:
-    On chat messages (irc.MSG),
+    On chat messages ('MSG'),
     though only private (not event.chan),
     when sent from my ip (event.host),
     and the message starts with "!do ",
     perform the command as a raw IRC command.
 
     Note:
-    - This trigger is a security risk! It's meant only to get you started,
-    but should be removed once your bot goes public.
+    - Use this trigger with caution! It will give full control of your bot to anyone
+      with the given host!
     - You have to use raw IRC commands, and not normal client commands.
     - If you don't have a static IP, you can use event.ident in combination with
-    for example event.host.endswith('-static-part-of-host.org')
+      for example event.host.endswith('-static-part-of-host.org')
     """
-    if event.type == irc.MSG and not event.chan and event.host == 'my-static-ip.org' and event.msg.startswith('!do '):
+    if event.type == 'MSG' and not event.chan and event.host == 'static-ip.org' and event.msg.startswith('!do '):
         msg_split = event.msg.split(' ',1)
         if len(msg_split) > 1:
             cmd = msg_split[1]
@@ -54,44 +54,56 @@ def slave(event):
 mybot.triggers.append(slave)
 
 
-on_join(event):
-    if event.type == irc.JOIN:
-        if event.host == 'static-ip.org':
-            pass
-            #mybot.op(chan=event.chan, nick=event.nick) #todo
-mybot.triggers.append(on_join)
+def auto_op(event):
+    if event.type == 'JOIN':
+        if event.host == 'static-ip.org': # add your ip here, or use event.nick, event.ident, event.host (or event.addr) for your own needs, as in nick!ident@host
+            mybot.op(chan=event.chan, nick=event.nick)
+mybot.triggers.append(auto_op)
 
-on_kick(event):
-    "On irc.KICK the nick of the one being kicked is event.target."
-    if event.type == irc.KICK:
+
+def rejoin(event):
+    "On 'KICK' the nick of the one being kicked is event.target."
+    if event.type == 'KICK':
         if event.target == mybot._nick:
-            pass
-            #mybot.op(chan=event.chan, nick=event.nick) #todo
-mybot.triggers.append(on_join)
+            mybot.join(event.chan)
+mybot.triggers.append(rejoin)
 
 
-on_msg(event):
-    "irc.MSG triggers on a channel or private text message."
-    if event.type == irc.MSG:
-        if event.msg == 'hi' and event.chan.lower() == '#irc.py':
+def claim(event):
+    "part and join chan if alone and not op"
+    if event.nick != mybot._nick and (event.type == 'QUIT' or event.type == 'PART' or event.type == 'KICK'):
+        chan = mybot.chans[event.chan.lower()]
+        if len( chan.all ) == 1 and not mybot._nick in chan.ops:
+            mybot.part( event.chan )
+            mybot.join( event.chan )
+mybot.triggers.append(claim)
+
+
+def on_msg(event):
+    "'MSG' triggers on a channel or private text message."
+    if event.type == 'MSG':
+        if event.msg == 'hi' and event.chan.lower() == '#ircutil':
             mybot.msg(chat=event.chat, msg="hi %s :)" % event.nick)
-            #mybot.msg(chat=event.chan, msg="hi %s :)" % event.nick)
+            #mybot.msg(chat=event.chan, msg="hi %s :)" % event.nick) # alternative code
 
+        # use not event.chan for private messages
         elif event.msg == 'hi' and not event.chan:
             mybot.msg(chat=event.chat, msg="hi :)")
-            #mybot.msg(chat=event.nick, msg="hi :)")
+            #mybot.msg(chat=event.nick, msg="hi :)") # alternative code
 mybot.triggers.append(on_msg)
 
-on_ready(event):
+
+def on_ready(event):
     """
-    irc.READY triggers on the raw IRC welcome event (001),
-    when your nick and host are checked, and you are ready to chat.
+    'READY' triggers on the raw IRC welcome event (001),
+    when your nick and host are accepted, and you are ready to chat.
     """
-    if event.type == irc.READY:
-        mybot.join('#irc.py')
+    if event.type == 'READY':
+        mybot.join('#ircutil')
 mybot.triggers.append(on_ready)
 
-
+# connect to irc
+mybot.connect()
 
 
 
@@ -159,7 +171,7 @@ event.chat responds to corresponding chat room (either event.nick or event.chan)
            of the event.
 
 event.cmd is the raw IRC command of the event, which is often the same as .type,
-          but sometimes not (such as with mode event types and irc.py event types).
+          but sometimes not (such as with mode event types and ircutil event types).
 
 event.host is the host (in nick!ident@host) of event.addr.
 

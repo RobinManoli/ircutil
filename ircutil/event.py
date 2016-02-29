@@ -1,41 +1,4 @@
-"""
-IRC REFERENCE
--------------
-
-JOIN
-	:nick!~ircutil@example.com JOIN #leveluplife
-	# on join
-	:kornbluth.freenode.net 332 nick #leveluplife :new
-	:kornbluth.freenode.net 333 nick #leveluplife nick!~ircutil@example.com 1455354288
-	:kornbluth.freenode.net 353 nick @ #leveluplife :nick @nick2
-	:kornbluth.freenode.net 366 nick #leveluplife :End of /NAMES list.
-
-MODE
-	:nick!~ircutil@example.com MODE #leveluplife +oo nick nick2
-	:nick!~ircutil@example.com MODE #leveluplife +p 
-	:nick!~ircutil@example.com MODE #leveluplife +b *!q@z
-	:nick MODE nick :+i
-
-
-NICK
-	:nick!~ircutil@example.com NICK :newnick
-PRIVMSG
-	:nick!~ircutil@example.com PRIVMSG #leveluplife :message text
-NOTICE
-	:nick!~ircutil@example.com NOTICE #leveluplife :hi
-	:nick!~ircutil@example.com NOTICE nick :yo
-TOPIC
-	:nick!~ircutil@example.com TOPIC #leveluplife :topic text
-KICK
-	:nick!~ircutil@example.com KICK #leveluplife nick :kick message
-
-PART
-	:nick!~ircutil@example.com PART #leveluplife
-	:nick!~ircutil@example.com PART #leveluplife :"part message"
-
-QUIT
-	:nick!~ircutil@example.com QUIT :Quit: What's Your Earth Mission?
-"""
+import ircutil.channel
 
 class Event():
     def renick(self):
@@ -157,7 +120,24 @@ class Event():
                 for setting in self.args2:
                     if setting[0:10] == 'CHANTYPES=':
                         self._connection._chantypes = setting.split('=')[1]
-                
+
+            elif self.arg1 == '332':
+                self.chan = self.arg3
+                self.chat = self.chan
+                self.msg = self.args4
+
+            elif self.arg1 == '333':
+                self.chan = self.arg3
+                self.chat = self.chan
+                self.msg = self.args4
+
+            elif self.arg1 == '353':
+                # namreply
+                # :irc.portlane.se 353 mynick = #chan :mynick +nick2 @nick3
+                self.type = 'NAMEREPLY'
+                self.chan = self.arg4
+                self.chat = self.chan
+                self.msg = self.args5
 
             elif self.arg1 in ('433', '437'):
                 # :wolfe.freenode.net 437 * myBot :Nick/channel is temporarily unavailable
@@ -181,7 +161,7 @@ class Event():
                 # :nick!ident@example.com MODE #ircutil +oo nick nick2
                 # :nick!ident@example.com MODE #ircutil +p 
                 # :nick!identy@example.com MODE #ircutil +b *!b@z
-                self.chan = self.arg2
+                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.mode = self.arg3.lstrip(':')
                 if len(self.mode) == 2:
@@ -245,6 +225,7 @@ class Event():
                 self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
+                self.type = 'MSG' if self.cmd == 'PRIVMSG' else self.cmd
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
                     self.msg = self.arg3.lstrip(':').strip( chr(1) )
                     if self.arg1 == 'PRIVMSG':
@@ -265,7 +246,48 @@ class Event():
             elif self.arg1 == 'QUIT':
                 self.msg = self.args2
 
+        ircutil.channel.update( self._connection.chans, self )
 
 
         for trigger in self.triggers:
             trigger(self)
+
+"""
+IRC REFERENCE
+-------------
+
+JOIN
+	:nick!~ircutil@example.com JOIN #leveluplife
+	# on join
+	:kornbluth.freenode.net 332 nick #leveluplife :new
+	:kornbluth.freenode.net 333 nick #leveluplife nick!~ircutil@example.com 1455354288
+	:kornbluth.freenode.net 353 nick @ #leveluplife :nick @nick2
+	:kornbluth.freenode.net 366 nick #leveluplife :End of /NAMES list.
+
+MODE
+	:nick!~ircutil@example.com MODE #leveluplife +oo nick nick2
+	:nick!~ircutil@example.com MODE #leveluplife +p 
+	:nick!~ircutil@example.com MODE #leveluplife +b *!q@z
+	:nick MODE nick :+i
+
+
+NICK
+	:nick!~ircutil@example.com NICK :newnick
+PRIVMSG
+	:nick!~ircutil@example.com PRIVMSG #leveluplife :message text
+NOTICE
+	:nick!~ircutil@example.com NOTICE #leveluplife :hi
+	:nick!~ircutil@example.com NOTICE nick :yo
+TOPIC
+	:nick!~ircutil@example.com TOPIC #leveluplife :topic text
+KICK
+	:nick!~ircutil@example.com KICK #leveluplife nick :kick message
+
+PART
+	:nick!~ircutil@example.com PART #leveluplife
+	:nick!~ircutil@example.com PART #leveluplife :"part message"
+
+QUIT
+	:nick!~ircutil@example.com QUIT :Quit: What's Your Earth Mission?
+"""
+

@@ -67,8 +67,9 @@ class Send():
             data = data.encode()
         self._connection._socket.send( data )
         # prevent flood
+        # note that this sleeps even on connect, delaying sending USER and NICK before READY
         import time
-        time.sleep(9)
+        time.sleep(1)
 
     def topic(self, chan, msg=''):
         self.raw('TOPIC %s :%s' %(chan, msg))
