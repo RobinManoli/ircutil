@@ -18,10 +18,10 @@ Very simple implementation that takes you very fast into coding your own stuff.
 - works with ipv4 and ipv6
 - works with python 2 and 3
 - flood protection
-- channel object which keeps track of ops, voices and normal users (half-ops not implemented in v0.7)
+- channel object which keeps track of ops, voices and normal users (half-ops not yet implemented)
+- handles server's password and server specific args for password and ipv4/ipv6
 	
 ## Todo
-- handle server passwords
 - create log function (maybe)
 	
 ## Not Planned Features
