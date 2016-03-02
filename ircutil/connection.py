@@ -13,7 +13,8 @@ class Connection():
         self.server = "irc.freenode.net" # main server
         self._server = '' # current server
         #self.__server = '' # last server # not used until mature decision
-        self.ipv6 = False
+        self.ipv6 = False # default setting for servers, can also be added as a server specific arg such as 'irc.freenode.net ipv6'
+        self.password = '' # default setting for servers, can also be added as a server specific arg such as 'irc.freenode.net password=mypassword'
 
         self.nicks = [] # list of alternative nicks
         self.servers = [] # list of alternative servers with optional ports
@@ -48,7 +49,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil 0.7 alpha"
+        self._version = "python ircutil 0.8 alpha"
 
     def _loop(self):
         while True:
@@ -77,18 +78,33 @@ class Connection():
         to create your own connection loop.
         Otherwise the reconnection happens automatically when lost,
         using Connection.server
+
+        Arguments may follow after server[:port], separated by spaces,
+        for the following server specific settings (which override Connection.setting):
+        ipv4, ipv6, password=mypassword
+
+        For example:
+        irc.freenode.net ipv6 password=mypassword
+        irc.freenode.net password= # do not send default password
         """
         def do_connect(server):
             import sys
             self.echo( 'Running Python ' + str(sys.version) )
 
             self.chans = {} # clear chans on reconnects
-            server_split = server.split(':')
-            server = server_split[0]
-            port = server_split[1] if len(server_split) > 1 else '6667'
+            server_args = server.split()
+
+            server_port = server_args[0].split(':')
+            server = server_port[0]
+            port = server_port[1] if len(server_port) > 1 else '6667'
             port = int(port) if port.isdigit() else 6667
 
-            self._socket = socket.socket(socket.AF_INET6 if self.ipv6 else socket.AF_INET, socket.SOCK_STREAM)
+            ipv4 = True if 'ipv4' in server_args else False
+            ipv6 = True if 'ipv6' in server_args else False
+            # name variable passwords to indicate that it is a list
+            passwords = [arg.split('=',1)[1] for arg in server_args if arg.startswith('password=')]
+
+            self._socket = socket.socket(socket.AF_INET6 if (self.ipv6 and not ipv4) or ipv6 else socket.AF_INET, socket.SOCK_STREAM)
             self.echo('Connecting to %s:%d...' % (server, port))
             try:
                 self._socket.connect(( server, port ))
@@ -96,6 +112,11 @@ class Connection():
                 self._connected = True
     
                 self._nick = self.nick
+                if passwords and passwords[0]:
+                    self.send.password( passwords[0] )
+                elif self.password and not passwords:
+                    # send default pass if passwords is not explicitly empty
+                    self.send.password( self.password )
                 self.send.nick( self.nick )
                 self.send.user(self.ident, self.hostname, self.servername, self.realname)
                 self._loop()

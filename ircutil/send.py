@@ -50,6 +50,9 @@ class Send():
     def op(self, chan, nick):
         self.mode( '+o', chan, nick )
 
+    def password(self, password):
+        self.raw( 'PASS %s' % str(password) )
+
     def voice(self, chan, nick):
         self.mode( '+v', chan, nick )
 
