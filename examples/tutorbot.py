@@ -13,10 +13,10 @@ mybot.nicks = ['|pwnBot|', 'pwnBot^']
 
 
 mybot.server = "irc.freenode.org:6665" # main server
-# list of alternative servers with optional ports
+# list of alternative servers with optional ports (and optional args, as described in mybot.connect() below)
 mybot.servers = ['irc.freenode.net:6666', 'irc.freenode.org']
 # There is also mybot._server which contains the current connection's server.
-# Do not change members that start with _!
+# Do not change members that start with _
 
 # Remember to connect at the bottom using: mybot.connect()
 # which connects and reconnects when disconnected.
@@ -117,6 +117,11 @@ mybot.connect() # Connects to mybot.server, and if disconnected it connects to
                   If you don't want to automatically reconnect you can do a
                   simple connect by sending a server parameter:
                   mybot.connect('irc.freenode.net')
+                  # mybot.connect('irc.freenode.net:6668') # or with port
+                  # mybot.connect('irc.freenode.net:6668 ipv6') # or with port and server specific ipv6
+                  # mybot.connect('irc.freenode.net ipv4') # or with server specific ipv4
+                  # mybot.connect('irc.freenode.net password=mypassword') # or with server specific password
+                  # mybot.connect('irc.freenode.net password=') # or with server specific omitting password
 
 mybot.ctcp('nick', 'VERSION', msg='', reply=False) # Sends a ctcp command.
                                                      If reply is set to True,
