@@ -70,12 +70,15 @@ mybot.triggers.append(rejoin)
 
 
 def claim(event):
-    "part and join chan if alone and not op"
+    "Get op when channel gets empty (unless has op)."
     if event.nick != mybot._nick and (event.type == 'QUIT' or event.type == 'PART' or event.type == 'KICK'):
-        chan = mybot.chans[event.chan.lower()]
-        if len( chan.all ) == 1 and not mybot._nick in chan.ops:
-            mybot.part( event.chan )
-            mybot.join( event.chan )
+        chans = [ event.chan.lower() ] if event.chan else mybot.chans.keys()
+        for chan in chans:
+            Chan = mybot.chans[chan]
+            print('check if claim', vars(Chan))
+            if len( Chan.all ) == 1 and not mybot._nick in Chan.ops:
+                mybot.part( chan )
+                mybot.join( chan )
 mybot.triggers.append(claim)
 
 

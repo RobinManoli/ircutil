@@ -103,7 +103,6 @@ class Event():
             self.msg = self.args1
 
 
-
         elif self.arg1:
             self.cmd = self.arg1
             self.type = self.arg1
@@ -115,21 +114,33 @@ class Event():
                 self._connection._welcomed = True
                 self.type = 'READY'
 
+
             if self.arg1 == '005':
                 # :rajaniemi.freenode.net 005 myBotte CHANTYPES=# EXCEPTS INVEX CHANMODES=eIbq,k,flj,CFLMPQScgimnprstz CHANLIMIT=#:120 PREFIX=(ov)@+ MAXLIST=bqeI:100 MODES=4 NETWORK=freenode KNOCK STATUSMSG=@+ CALLERID=g :are supported by this server
                 for setting in self.args2:
                     if setting[0:10] == 'CHANTYPES=':
                         self._connection._chantypes = setting.split('=')[1]
 
+
+            elif self.arg1 == '324':
+                # reply to: MODE #mychan
+                # :sinisalo.freenode.net 324 mynick #mychan +ps
+                self.chan = self.arg3
+                self.chat = self.chan
+                self.msg = self.args4
+
+
             elif self.arg1 == '332':
                 self.chan = self.arg3
                 self.chat = self.chan
                 self.msg = self.args4
 
+
             elif self.arg1 == '333':
                 self.chan = self.arg3
                 self.chat = self.chan
                 self.msg = self.args4
+
 
             elif self.arg1 == '353':
                 # namreply
@@ -138,6 +149,7 @@ class Event():
                 self.chan = self.arg4
                 self.chat = self.chan
                 self.msg = self.args5
+
 
             elif self.arg1 in ('433', '437'):
                 # :wolfe.freenode.net 437 * myBot :Nick/channel is temporarily unavailable
@@ -148,6 +160,7 @@ class Event():
             elif self.arg1 == 'JOIN':
                 self.chan = self.arg2.lstrip(':')
                 self.chat = self.chan
+
 
             elif self.arg1 == 'KICK':
                 self.chan = self.arg2

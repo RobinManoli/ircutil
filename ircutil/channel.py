@@ -1,4 +1,4 @@
-# todo, modes +ovh, kicks
+# todo, modes +h
 class Channel():
     def __init__(self, chan):
         self.chan = chan
@@ -11,9 +11,9 @@ class Channel():
         self.topic = ""
         self.topicsetter = ""
         self.topictime = None
-        #self.modes = "" # not implemented
-        #self.key
-        #self.bans
+        self.modes = ""
+        self.k = '' # key
+        self.b = [] # bans
 
     def update_all(self):
         self.all = self.ops[:] + self.halfops[:] + self.voices[:] + self.users[:]
@@ -37,6 +37,9 @@ def update(chans, event):
                 ch = chans[chan]
                 ch.remove_user(event.nick)
                 ch.update_all()
+        return
+
+    if not event.chan:
         return
 
     if event.chan.lower() not in chans.keys():
@@ -89,7 +92,7 @@ def update(chans, event):
             if nick in chan.users:
                 chan.users.remove(nick)
 
-        if event.mode == '+v':
+        elif event.mode == '+v':
             # nick may already be voiced
             if nick not in chan.voices:
                 chan.voices.append( nick )
@@ -98,7 +101,7 @@ def update(chans, event):
             if nick in chan.users:
                 chan.users.remove(nick)
 
-        if event.mode == '-o':
+        elif event.mode == '-o':
             # nick may already be deopped
             if nick in chan.ops:
                 chan.ops.remove( nick )
@@ -107,7 +110,7 @@ def update(chans, event):
             if nick not in chan.users and nick not in chan.voices:
                 chan.users.append(nick)
 
-        if event.mode == '-v':
+        elif event.mode == '-v':
             # nick may already be devoiced
             if nick in chan.voices:
                 chan.voices.remove( nick )
@@ -116,6 +119,41 @@ def update(chans, event):
             if nick not in chan.users and nick not in chan.ops:
                 chan.users.append(nick)
 
+        elif event.mode == '+k':
+            chan.k = event.target
+
+        elif event.mode == '-k':
+            chan.k = ''
+
+        elif event.mode[0] == '+':
+            # modes that add to lists, such as b, E, I
+            mode = event.mode[1]
+            if not hasattr(chan, mode):
+                setattr(chan, mode, [])
+            getattr(chan, mode).append(event.target)
+
+        elif event.mode[0] == '-':
+            # modes that add to lists, such as b, E, I
+            mode = event.mode[1]
+            if not hasattr(chan, mode):
+                setattr(chan, mode, [])
+            else:
+                lst = getattr(chan, mode)
+                if event.target in lst:
+                    lst.remove(event.target)
+
+    elif event.type == 'MODE':
+        # chan flag modes
+        mode = event.mode[1]
+        if event.mode[0] == '+':
+            chan.modes += mode
+        else:
+            chan.modes = chan.modes.replace(mode, '')
+
+    elif event.cmd == '324':
+        # mode #chan
+        if event.msg:
+            chan.modes = event.msg.lstrip('+')
 
     elif event.cmd == '332':
         chan.topic = event.msg
