@@ -106,7 +106,14 @@ class Send():
         realname = str(realname)
         self.raw('USER %s %s %s :%s' % (ident, hostname, servername, realname))
 
-    def quit(self, msg=''):
+    def quit(self, msg='', exit=True):
+        """
+        Send a QUIT command to the IRC server with an optional message.
+        If second arg exit is True (as default), the script will terminate.
+        """
         msg = str(msg)
         self.raw('QUIT :' + msg)
-        
+        if exit:
+            import sys
+            sys.exit()
+
