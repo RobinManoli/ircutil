@@ -9,6 +9,7 @@ class Send():
         self.mode( '+b', chan, mask )
 
     def ctcp(self, chat, command, msg='', reply=False):
+        msg = str(msg)
         ctcp = command.upper()
         ctcp += ' ' + msg if msg else ''
         ctcp =chr(1)+ctcp+chr(1)
@@ -23,46 +24,61 @@ class Send():
         self.mode( '-v', chan, nick )
 
     def echo(self, data):
-        Event(self._connection, '>>> ' + data)
+        Event(self._connection, '>>> ' + str(data))
 
-    def join(self, channel):
-        self.raw('JOIN ' + channel)
+    def join(self, channel, key=''):
+        channel = str(channel)
+        key = str(key)
+        self.raw('JOIN %s %s' %(channel,key))
 
     def me(self, chat, msg=''):
         self.ctcp( chat, 'ACTION', msg )
 
     def msg(self, chat, msg):
+        chat = str(chat)
+        msg = str(msg)
         self.raw('PRIVMSG %s :%s' % (chat, msg) )
 
     def mode(self, mode, chan='', params=''):
         # untested
+        mode = str(mode)
+        chan = str(chan)
+        params = str(params)
         if chan:
             self.raw('MODE %s %s %s' % (chan, mode, params))
         else:
             self.raw('MODE %s %s %s' % (self._connection._nick, mode, params))
 
     def notice(self, chat, msg):
+        chat = str(chat)
+        msg = str(msg)
         self.raw('NOTICE %s :%s' % (chat, msg) )
 
     def nick(self, nick=''):
+        nick = str(nick)
         self.raw('NICK %s' % str(nick) or 'ircutil')
 
     def op(self, chan, nick):
         self.mode( '+o', chan, nick )
 
     def password(self, password):
+        password = str(password)
         self.raw( 'PASS %s' % str(password) )
 
     def voice(self, chan, nick):
         self.mode( '+v', chan, nick )
 
-    def part(self, channel, msg=''):
-        self.raw('PART %s :%s' % (channel, msg))
+    def part(self, chan, msg=''):
+        chan = str(chan)
+        msg = str(msg)
+        self.raw('PART %s :%s' % (chan, msg))
 
     def pong(self, pong):
+        pong = str(pong)
         self.raw('PONG ' + pong)
 
     def raw(self, data):
+        data = str(data)
         Event(self._connection, '<<< ' + data)
         data = data + '\r\n'
         if sys.version_info > (2,99,99):
@@ -75,6 +91,8 @@ class Send():
         time.sleep(1)
 
     def topic(self, chan, msg=''):
+        chan = str(chan)
+        msg = str(msg)
         self.raw('TOPIC %s :%s' %(chan, msg))
 
     def unban(self, chan, mask):
@@ -82,8 +100,13 @@ class Send():
 
     def user(self, ident='ircutil', hostname='ircutil',
              servername='ircutil', realname='ircutil for easy coding irc in python'):
+        ident = str(ident)
+        hostname = str(hostname)
+        servername = str(servername)
+        realname = str(realname)
         self.raw('USER %s %s %s :%s' % (ident, hostname, servername, realname))
 
     def quit(self, msg=''):
+        msg = str(msg)
         self.raw('QUIT :' + msg)
         
