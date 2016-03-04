@@ -32,6 +32,10 @@ def raw(event):
     print (event.raw)
 mybot.triggers.append(raw)
 ```
+And connect to IRC:
+```
+mybot.connect()
+```
 
 
 ## Getting Started
