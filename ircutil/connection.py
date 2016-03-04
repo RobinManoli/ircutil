@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import socket
 from ircutil.send import Send
@@ -22,6 +23,7 @@ class Connection():
 
         self.triggers = [] # list of functions to run on each irc event
         self._connected = False
+        self._emulated = False
         self._welcomed = False # when accepted on server (for nick loop)
         self._chantypes = '#'
 
@@ -49,7 +51,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil 0.8 alpha"
+        self._version = "python ircutil 0.9 beta"
 
     def _loop(self):
         while True:
@@ -70,6 +72,39 @@ class Connection():
 
             for event in events:
                 Event(self, event)
+
+    def emulate(self, file):
+        """
+        Emulate a connection by running predefined IRC commands from a text file (first arg).
+        """
+        self._emulated = True
+        self._nick = self.nick
+
+        class FakeSocket():
+            def send(self, *args):
+                "Creates a fake socket which does nothing instead of sending through socket."
+
+        with open(file) as f:
+            for raw_event in f.readlines():
+                raw_event = raw_event.strip()
+                try:
+                    print('Emulating:', raw_event)
+                    self._socket = FakeSocket()
+                    event = Event(self, raw_event)
+
+                except Exception as e:
+                    import sys
+                    import traceback
+                    import os
+                    print()
+                    ex_type, ex, tb = sys.exc_info()
+                    print(ex_type)
+                    print(ex)
+                    traceback.print_tb(tb)
+
+        self._emulated = False
+        self._socket = None
+                
 
     def connect(self, server=''):
         """

@@ -1,6 +1,6 @@
-import ircutil as irc
+import ircutil
 
-mybot = irc.Connection()
+mybot = ircutil.Connection()
 mybot.nick = "ezBot" # main nick
 mybot.server = "irc.freenode.org" # main server
 
