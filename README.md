@@ -8,12 +8,12 @@ Very simple implementation that takes you very fast into coding your own stuff.
 - parses multiple modes into single events (+oo becomes two separate op events)
 - finds a free nick when nick in use when connecting to server
 - reconnects (optionally) to server list when disconnected
+- channel object which keeps track of modes, ops, voices and normal users (half-ops not yet implemented)
+- handles server's password and server specific args for password and ipv4/ipv6
+- emulate() function that acts as receiving a set of raw IRC events written in a text file
 - works with ipv4 and ipv6
 - works with python 2 and 3
 - flood protection
-- channel object which keeps track of modes, ops, voices and normal users (half-ops not yet implemented)
-- handles server's password and server specific args for password and ipv4/ipv6
-- emulate() function that reacts to raw IRC events written in a text file
 
 
 ## Example Code
@@ -44,12 +44,15 @@ Writing your own bot is as simple as this:
 1. Make a copy of ./examples/get_started_bot.py to the same folder as README.md.
 2. Edit your copy and add your IRC server information.
 3. Run the script and see that it connects to the server, joins the channel and responds to "hi".
-4. Read and understand the very simple ./examples/get_started_bot.py.
 
 
-## Tutorial
-Look at ./examples/tutorbot.py to see how to begin to implement your own stuff.
+## Tutorials
+
+1. Read and understand the very simple ./examples/get_started_bot.py
+2. Read and try out ./examples/tutorbot.py
+3. Create trigger functions that print vars(event), vars(mybot) and vars(mybot.chans) to get a good overview of ircutil.
 
 
 ## Not Planned Features
 - DCC chat/sends
+- Threads
