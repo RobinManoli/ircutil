@@ -40,15 +40,15 @@ mybot.connect()
 
 ## Getting Started
 
-1. Make a copy of ./examples/get_started_bot.py to the same folder as README.md.
+1. Make a copy of examples/get_started_bot.py to the same folder as README.md.
 2. Edit your copy and add your IRC server information.
 3. Run the script and see that it connects to the server, joins the channel and responds to "hi".
 
 
 ## Tutorial
 
-1. Read and understand the very simple ./examples/get_started_bot.py
-2. Read the whole thing, and try out ./examples/tutorbot.py
+1. Read and understand the very simple examples/get_started_bot.py
+2. Read, understand and try out examples/tutorbot.py (read the whole file)
 3. Create trigger functions that print vars(event), vars(mybot) and vars(mybot.chans) to get a good overview of ircutil.
 4. Learn to use mybot.emulate() (see tutorbot.py) instead of mybot.connect() to test your scripts.
 
