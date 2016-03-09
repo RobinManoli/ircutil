@@ -48,7 +48,7 @@ mybot.connect()
 ## Tutorial
 
 1. Read and understand the very simple examples/get_started_bot.py
-2. Read, understand and try out examples/tutorbot.py (read the whole file)
+2. Read, understand and try out examples/tutorbot.py (read the whole file).
 3. Create trigger functions that print vars(event), vars(mybot) and vars(mybot.chans) to get a good overview of ircutil.
 4. Learn to use mybot.emulate() (see tutorbot.py) instead of mybot.connect() to test your scripts.
 
