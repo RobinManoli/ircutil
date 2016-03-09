@@ -157,7 +157,8 @@ mybot.triggers.append(claim)
 
 # CONNECT
 # connect to irc, (reconnects when disconnected).
-mybot.connect()
+if __name__ == '__main__':
+    mybot.connect()
 # If you don't want to automatically reconnect, send the server parameter:
 # mybot.connect('irc.freenode.net')
 # Connections can handle certain args. These args also work for mybot.server and mybot.servers.
@@ -251,6 +252,13 @@ event.chat responds to corresponding chat room (either event.nick or event.chan)
 
 event.cmd is the raw IRC command of the event, which is often the same as .type,
           but sometimes not (such as with mode event types and ircutil event types).
+
+event._connection is a pointer to the connection of the event,
+                  which can be used to access the connection
+                  inside functions in separate files from your script:
+                  def myoutsidefunc(event):
+                      mybot = event._connection
+                      mybot.quit()
 
 event.host is the host (in nick!ident@host) of event.addr.
 
