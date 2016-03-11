@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import sys
 import socket
 from ircutil.send import Send
@@ -56,9 +57,20 @@ class Connection():
     def _loop(self):
         while True:
             newdata = self._socket.recv(4096)
-            if sys.version_info > (2,99,99):
-                # use byte python 3 and string in python 2
-                newdata = newdata.decode()
+            if sys.version_info >= (3,0):
+                try:
+                    newdata = newdata.decode() # fails on certain Swedish chars in ISO-8859-1
+                except UnicodeDecodeError:
+                    try:
+                        # If you don't know the encoding, then to read binary input into string in Python 3 and Python 2 compatible way, use ancient MS-DOS cp437 encoding:
+                        # http://stackoverflow.com/a/27527728/942621
+                        newdata = newdata.decode('cp437') # displays the Swedish chars
+                        #print('cp437', newdata)
+                    except:
+                        raise
+                        #newdata = str(newdata, 'utf-8', 'ignore') # seems to work but removes the Swedish chars
+                        # http://stackoverflow.com/questions/436220/python-is-there-a-way-to-determine-the-encoding-of-text-file
+                        #newdata = unicode(newdata, errors='ignore') #python2?
             newdata = self._buffer + newdata
 
             if not newdata:
@@ -162,7 +174,7 @@ class Connection():
                 import os
                 ex_type, ex, tb = sys.exc_info()
                 traceback.print_tb(tb)
-                self.echo('DISCONNECTED - ' + str(ex))
+                self.echo( 'DISCONNECTED - %s %s %s' % (str(ex_type),str(ex),str(traceback.extract_stack())) )
                 print ()
 
             self._connected = False
@@ -170,7 +182,7 @@ class Connection():
             self._socket.close()
 
         if server:
-            print( 'Connect without loop...' )
+            #print( 'Connect without loop...' )
             do_connect(server)
 
         else:
