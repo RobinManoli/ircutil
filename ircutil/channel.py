@@ -31,7 +31,7 @@ class Channel():
 
 
 def update(chans, event):
-    if event.type == 'QUIT':
+    if event.QUIT:
         for chan in chans.keys():
             if event.nick in chans[chan].all:
                 ch = chans[chan]
@@ -47,26 +47,26 @@ def update(chans, event):
 
     chan = chans[event.chan.lower()]
 
-    if event.type == 'JOIN':
+    if event.JOIN:
         # do not add self here, because self might be op if channel is empty
         if not event.nick == event._connection._nick:
             chan.users.append(event.nick)
 
-    elif event.type == 'PART':
+    elif event.PART:
         if event.nick == event._connection._nick:
             del chan
             return
         else:
             chan.remove_user(event.nick)
 
-    elif event.type == 'KICK':
+    elif event.KICK:
         if event.target == event._connection._nick:
             del chan
             return
         else:
             chan.remove_user(event.target)
 
-    elif event.type == 'NAMEREPLY':
+    elif event.NAMREPLY:
         for nick in event.msg.split():
             if nick[0] == '@':
                 if nick.lstrip('@') not in chan.ops:
@@ -80,7 +80,7 @@ def update(chans, event):
             elif nick not in chan.users:
                 chan.users.append(nick)
 
-    elif event.cmd == 'MODE' and event.target:
+    elif event.MODE and event.target:
         nick = event.target
 
         if event.mode == '+o':
@@ -142,7 +142,7 @@ def update(chans, event):
                 if event.target in lst:
                     lst.remove(event.target)
 
-    elif event.type == 'MODE':
+    elif event.MODE:
         # chan flag modes
         mode = event.mode[1]
         if event.mode[0] == '+':
@@ -150,19 +150,19 @@ def update(chans, event):
         else:
             chan.modes = chan.modes.replace(mode, '')
 
-    elif event.cmd == '324':
+    elif event.type == '324':
         # mode #chan
         if event.msg:
             chan.modes = event.msg.lstrip('+')
 
-    elif event.cmd == '332':
+    elif event.type == '332':
         chan.topic = event.msg
 
-    elif event.cmd == '333':
+    elif event.type == '333':
         chan.topicsetter = event.arg4
         chan.topictime = int(event.arg5) if event.arg5.isdigit() else event.arg5
 
-    elif event.type == 'TOPIC':
+    elif event.TOPIC:
         chan.topic = event.msg
         chan.topicsetter = event.addr
         import time

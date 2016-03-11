@@ -36,6 +36,36 @@ class Event():
         self.send = connection.send
         self.triggers = connection.triggers
 
+        # https://tools.ietf.org/html/rfc2812 for more
+        self.ACTION = False
+        self.BAN = False
+        self.CTCP = False
+        self.CTCP_REPLY = False
+        self.DEOP = False
+        self.DEVOICE = False
+        self.DEHALFOP = False
+        self.ECHO = False
+        self.ERROR = False
+        self.HALFOP = False
+        self.JOIN = False
+        self.KICK = False
+        self.MODE = False
+        #self.MOTD = False # not implemented
+        self.MSG = False
+        self.NAMREPLY = False
+        self.NICK = False
+        self.NOTICE = False
+        self.OP = False
+        self.PART = False
+        self.PING = False
+        self.PRIVMSG = False
+        self.QUIT = False
+        self.SENT = False
+        self.TOPIC = False
+        self.UNBAN = False
+        self.VOICE = False
+        self.WELCOME = False
+
         #raw_event = raw_event.rstrip('\r') # remove possible \r (in non EFNet)
         # clean event data (if it comes from echo it might contains new lines, and also if it's non efnet it contains them)
         raw_event = raw_event.replace('\r', '').replace('\n', '')
@@ -63,7 +93,6 @@ class Event():
         self.addr = ''
         self.chan = ''
         self.chat = ''
-        self.cmd = ''
         self.host = ''
         self.ident = ''
         self.mode = ''
@@ -75,36 +104,32 @@ class Event():
 
 
         if self.arg0 == 'PING':
-            self.cmd = 'PING'
             self.type = 'PING'
             self.msg = self.arg1
             self.send.pong( self.msg )
 
         elif self.arg0 == '<<<':
-            self.cmd = self.arg2
-            self.type = 'SENT'
+            self.type = self.arg2
             self.msg = self.args1
+            self.SENT = True
 
         elif self.arg0 == '>>>':
-            self.cmd = self.arg2
-            self.type = 'ECHO'
+            self.type = self.arg2
             self.msg = self.args1
+            self.ECHO = True
 
         elif self.arg0 == 'ERROR':
             # untested in this version
-            self.cmd = 'ERROR'
             self.type = 'ERROR'
             self.msg = self.args1
 
         elif self.arg0 == 'NOTICE':
             # untested in this version, but some notices may look like this
-            self.cmd = 'NOTICE'
             self.type = 'NOTICE'
             self.msg = self.args1
 
 
         elif self.arg1:
-            self.cmd = self.arg1
             self.type = self.arg1
             # most common events contain either server addr or nick!ident@host
             self.parse_addr( self.arg0 )
@@ -112,7 +137,7 @@ class Event():
             if self.arg1 == '001':
                 # :rajaniemi.freenode.net 001 myBotte :Welcome to the freenode Internet Relay Chat Network myBotte
                 self._connection._welcomed = True
-                self.type = 'READY'
+                self.WELCOME = True
 
 
             if self.arg1 == '005':
@@ -145,7 +170,7 @@ class Event():
             elif self.arg1 == '353':
                 # namreply
                 # :irc.portlane.se 353 mynick = #chan :mynick +nick2 @nick3
-                self.type = 'NAMEREPLY'
+                self.NAMREPLY = True
                 self.chan = self.arg4
                 self.chat = self.chan
                 self.msg = self.args5
@@ -169,7 +194,7 @@ class Event():
                 self.target = self.arg3
 
 
-            elif self.cmd == 'MODE':
+            elif self.arg1 == 'MODE':
                 # :nick!ident@host MODE nick|chan [+|-A][B][C][-|+D][E][F] [Atarget][Btarget]...
                 # :nick!ident@example.com MODE #ircutil +oo nick nick2
                 # :nick!ident@example.com MODE #ircutil +p 
@@ -181,18 +206,22 @@ class Event():
                     # only one mode was set this event, so process normally
                     self.target = self.arg4
                     if self.mode == '+o':
-                        self.type = 'OP'
+                        self.OP = True
                     elif self.mode == '-o':
-                        self.type = 'DEOP'
+                        self.DEOP = True
                     elif self.mode == '+v':
-                        self.type = 'VOICE'
+                        self.VOICE = True
                     elif self.mode == '-v':
-                        self.type = 'DEVOICE'
+                        self.DEVOICE = True
                     elif self.mode == '+b':
-                        self.type = 'BAN'
+                        self.BAN = True
                     elif self.mode == '-b':
-                        self.type = 'UNBAN'
-                    
+                        self.UNBAN = True
+                    elif self.mode == '+h':
+                        self.HALFOP = True
+                    elif self.mode == '-h':
+                        self.DEHALFOP = True
+
                 else:
                     # more than one mode was set this event, so split them all up
                     # and trigger each mode as one event
@@ -238,17 +267,17 @@ class Event():
                 self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
-                self.type = 'MSG' if self.cmd == 'PRIVMSG' else self.cmd
+                self.MSG = True if self.arg1 == 'PRIVMSG' else False
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
                     self.msg = self.arg3.lstrip(':').strip( chr(1) )
                     if self.arg1 == 'PRIVMSG':
-                        self.type = 'CTCP'
+                        self.CTCP = True
                         if self.msg == 'VERSION':
                             self.send.ctcp( self.chat, 'VERSION', self._connection._version, reply=True )
                         elif self.msg.startswith('ACTION '):
-                            self.type = 'ACTION'
+                            self.ACTION = True
                     else:
-                        self.type = 'CTCP_REPLY'
+                        self.CTCP_REPLY = True
 
 
             elif self.arg1 == 'TOPIC':
@@ -259,6 +288,8 @@ class Event():
             elif self.arg1 == 'QUIT':
                 self.msg = self.args2
 
+        if hasattr(self, self.type):
+            setattr(self, self.type, True)
         ircutil.channel.update( self._connection.chans, self )
 
 

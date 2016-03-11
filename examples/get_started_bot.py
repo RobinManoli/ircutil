@@ -11,12 +11,12 @@ mybot.triggers.append(raw)
 
 def autojoin(event):
     "Join a channel when connected and ready."
-    if event.type == 'READY':
+    if event.WELCOME:
         mybot.join('#ircutil')
 mybot.triggers.append(autojoin)
 
 def respond(event):
-    if event.type == 'MSG' and event.msg == "hi":
+    if event.MSG and event.msg == "hi":
         mybot.msg(chat=event.chat, msg="%s: hi" %event.nick)
 mybot.triggers.append(respond)
 

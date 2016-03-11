@@ -59,7 +59,7 @@ def slave(event):
     !do JOIN #ircutil
 
     Explicitly:
-    On chat messages ('MSG'),
+    On chat messages (event.MSG),
     though only private (not event.chan),
     when sent from my ip (event.host),
     and the message starts with "!do ",
@@ -75,7 +75,7 @@ def slave(event):
       for example event.host.endswith('-static-part-of-host.org').
       Use print( vars(event) ) to see the full content of the Event object.
     """
-    if event.type == 'MSG' and not event.chan and event.host == 'static-ip.org' and event.msg.startswith('!do '):
+    if event.MSG and not event.chan and event.host == 'static-ip.org' and event.msg.startswith('!do '):
         msg_split = event.msg.split(' ',1)
         if len(msg_split) > 1:
             cmd = msg_split[1]
@@ -84,7 +84,7 @@ mybot.triggers.append(slave)
 
 
 def auto_op(event):
-    if event.type == 'JOIN':
+    if event.JOIN:
         # add your ip here, or use event.nick, event.ident, event.host (or event.addr) for your own needs, as in nick!ident@host
         if event.host == 'static-ip.org':
             mybot.op(chan=event.chan, nick=event.nick)
@@ -92,16 +92,16 @@ mybot.triggers.append(auto_op)
 
 
 def rejoin(event):
-    "On 'KICK' the nick of the one being kicked is stored in event.target."
-    if event.type == 'KICK':
+    "On event.KICK the nick of the one being kicked is stored in event.target."
+    if event.KICK:
         if event.target == mybot._nick:
             mybot.join(event.chan)
 mybot.triggers.append(rejoin)
 
 
 def on_msg(event):
-    "'MSG' triggers on a channel or private text message."
-    if event.type == 'MSG':
+    "event.MSG triggers on a channel or private text message."
+    if event.MSG:
         if event.msg == 'hi' and event.chan.lower() == '#ircutil':
             mybot.msg(chat=event.chat, msg="hi %s :)" % event.nick)
             #mybot.msg(chat=event.chan, msg="hi %s :)" % event.nick) # alternative code
@@ -113,22 +113,21 @@ def on_msg(event):
 mybot.triggers.append(on_msg)
 
 
-def on_ready(event):
+def on_welcome(event):
     """
-    'READY' triggers on the raw IRC welcome event (001),
+    event.WELCOME triggers on the raw IRC welcome event (001),
     when your nick and host are accepted, and you are ready to chat.
     
-    Normally, event.type and event.cmd are the same.
-    But since many IRC commands are numbers instead of words,
-    ircutil names some of them (for example 'READY')
-    for the code to be more clean and consistent.
+    You can usually use event.type to get the raw IRC command of the event,
+    and in the most common cases you can check with event booleans
+    for very clean code (event.JOIN, event.QUIT, et.c.).
     (For the full reference, look at the code in ircutil/event.py
-    and search for self.type)
+    or do print( vars(event) ))
     
     So if you want to just use raw IRC commands, use event.cmd.
     If you want to use irscutil's abstraction, use event.type.
     """
-    if event.type == 'READY':
+    if event.WELCOME:
         # triggers after nick and host are accepted, and are ready to chat
 
         # auto-join
@@ -136,13 +135,13 @@ def on_ready(event):
 
         # uncomment to get a full view of the Connection object
         # print( vars(mybot) )
-mybot.triggers.append(on_ready)
+mybot.triggers.append(on_welcome)
 
 
 def claim(event):
     "Get op when channel gets empty (unless already has op)."
     # monitor QUIT, PART and KICK events
-    if event.nick != mybot._nick and (event.type == 'QUIT' or event.type == 'PART' or event.type == 'KICK'):
+    if event.nick != mybot._nick and (event.QUIT or event.PART or event.KICK):
         # create a list of channels to check (because the QUIT event doesn't have a channel)
         chans = [ event.chan.lower() ] if event.chan else mybot.chans.keys()
         for chan in chans:
@@ -242,6 +241,9 @@ mybot.quit('my message')
 
 Use print( vars(event) ) for a full list!
 
+There are many booleans such as event.JOIN, event.MSG, event.OP, et.c.
+for quickly checking what type of event is going on.
+
 event.addr is the nick!ident@hose of the one who performed the command,
            or the server currently connected to.
 
@@ -249,9 +251,6 @@ event.chan is the channel (or empty string if no channel was involved).
 
 event.chat responds to corresponding chat room (either event.nick or event.chan)
            of the event.
-
-event.cmd is the raw IRC command of the event, which is often the same as .type,
-          but sometimes not (such as with mode event types and ircutil event types).
 
 event._connection is a pointer to the connection of the event,
                   which can be used to access the connection
@@ -274,5 +273,8 @@ event.target
             is the nick of the one receiving OP/DEOP/VOICE/DEVOICE.
             is the mask for the BAN/UNBAN events (or other events with masks).
             is the key for the KEY event.
+
+event.type is the raw IRC command of the event, which is usually a capital word
+           (such as JOIN or QUIT), but sometimes a number
 
 """
