@@ -32,6 +32,15 @@ def raw(event):
     print (event.raw)
 mybot.triggers.append(raw)
 ```
+Now, respond to anyone saying hi (in private or channel):
+```
+def respond(event):
+    if event.MSG and event.msg == "hi":
+        # chat and event.chat refers to either a channel or nickname,
+        # to send the message to
+        mybot.msg(chat=event.chat, msg=event.nick + ": hi")
+mybot.triggers.append(respond)
+```
 And connect to IRC:
 ```
 mybot.connect()
