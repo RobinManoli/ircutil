@@ -1,5 +1,5 @@
 import sys
-from ircutil.event import Event
+#from ircutil.event import Event
 
 class Send():
     def __init__(self, connection):
@@ -24,7 +24,8 @@ class Send():
         self.mode( '-v', chan, nick )
 
     def echo(self, data):
-        Event(self._connection, '>>> ' + str(data))
+        #Event(self._connection, '>>> ' + str(data))
+        self._connection.eventhandler( '>>> ' + str(data), sendevent=True )
 
     def join(self, channel, key=''):
         channel = str(channel)
@@ -79,7 +80,8 @@ class Send():
 
     def raw(self, data):
         data = str(data)
-        Event(self._connection, '<<< ' + data)
+        #Event(self._connection, '<<< ' + data)
+        self._connection.eventhandler( '<<< ' + data, sendevent=True )
         data = data + '\r\n'
         if sys.version_info > (2,99,99):
             # use byte python 3 and string in python 2

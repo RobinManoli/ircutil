@@ -27,23 +27,29 @@ class Event():
             # :server.addr
             self.host = self.addr
 
-    def __init__(self, connection, raw_event):
-        # debug
-        #print()
-        #print(raw_event)
-        #print()
+    def __init__(self, connection):
         self._connection = connection
         self.send = connection.send
         self.triggers = connection.triggers
 
+    def handle(self, raw_event):
+        # debug
+        #print()
+        #print(raw_event)
+        #print()
+        #import inspect
+        #print( 'raw event caller name:', inspect.stack()[1][3], raw_event)
+
         # https://tools.ietf.org/html/rfc2812 for more
         self.ACTION = False
         self.BAN = False
+        # self.CONNECTED = False # connected to socket, but not ready to chat, not implemented yet
         self.CTCP = False
         self.CTCP_REPLY = False
         self.DEOP = False
         self.DEVOICE = False
         self.DEHALFOP = False
+        # self.DISCONNECTED = False # disconnected from socket, not implemented yet
         self.ECHO = False
         self.ERROR = False
         self.HALFOP = False
@@ -107,6 +113,7 @@ class Event():
             self.type = 'PING'
             self.msg = self.arg1
             self.send.pong( self.msg )
+            self.PING = True
 
         elif self.arg0 == '<<<':
             self.type = self.arg2

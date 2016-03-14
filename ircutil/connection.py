@@ -3,10 +3,28 @@ from __future__ import print_function
 import sys
 import socket
 from ircutil.send import Send
-from ircutil.event import Event
+#from ircutil.event import Event
 
 
 class Connection():
+    def _eventhandler(self, eventstr, sendevent=False):
+        from ircutil.event import Event
+
+        if sendevent:
+            # since send events might happen inside normal event function call
+            # (pong happens inside ping, and happens on ctcp version, nick collission, etc)
+            # use a special event for sending
+            if not hasattr(self, '_Sendevent'):
+                self._Sendevent = Event(self)
+            self._Sendevent.handle(eventstr)
+
+        else:
+            #Event(self, eventstr)
+            if not hasattr(self, '_Event'):
+                self._Event = Event(self)
+            self._Event.handle(eventstr)
+
+
     def __init__(self):
         self.nick = "ircutil" # main nick
         self._nick = self.nick # current nick
@@ -23,6 +41,7 @@ class Connection():
         self.chans = {} # keeps records of channel users, topics and modes
 
         self.triggers = [] # list of functions to run on each irc event
+        self.eventhandler = self._eventhandler # override this to create custom event handler, that receives sendevent argument from self.send (remember to run self.triggers)
         self._connected = False
         self._emulated = False
         self._welcomed = False # when accepted on server (for nick loop)
@@ -52,7 +71,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil 0.9 beta"
+        self._version = "python ircutil 0.95 beta"
 
     def _loop(self):
         while True:
@@ -83,7 +102,8 @@ class Connection():
             self._buffer = events.pop()
 
             for event in events:
-                Event(self, event)
+                self.eventhandler(event)
+                #Event(self, event)
 
     def emulate(self, file):
         """
@@ -102,7 +122,8 @@ class Connection():
                 try:
                     print('Emulating:', raw_event)
                     self._socket = FakeSocket()
-                    event = Event(self, raw_event)
+                    #event = Event(self, raw_event)
+                    self.eventhandler(event)
 
                 except Exception as e:
                     import sys
