@@ -62,6 +62,7 @@ mybot.connect()
 4. Learn to use mybot.emulate() (see tutorbot.py) instead of mybot.connect() to test your scripts.
 
 
-## Not Planned Features
+## Not Included (Nor Planned)
 - DCC chat/sends
 - Threads
+- SSL/TLS
