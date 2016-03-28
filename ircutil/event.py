@@ -116,12 +116,12 @@ class Event():
             self.PING = True
 
         elif self.arg0 == '<<<':
-            self.type = self.arg2
+            self.type = self.arg0
             self.msg = self.args1
             self.SENT = True
 
         elif self.arg0 == '>>>':
-            self.type = self.arg2
+            self.type = self.arg0
             self.msg = self.args1
             self.ECHO = True
 
