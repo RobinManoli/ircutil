@@ -10,6 +10,7 @@ Very simple implementation that takes you very fast into coding your own stuff.
 - reconnects (optionally) to server list when disconnected
 - channel object which keeps track of modes, ops, voices and normal users (half-ops not yet implemented)
 - handles server's password and server specific args for password and ipv4/ipv6
+- handles ctcp sending and replying
 - emulate() function that acts as receiving a set of raw IRC events written in a text file
 - works with ipv4 and ipv6
 - works with python 2 and 3
