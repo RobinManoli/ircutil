@@ -123,7 +123,7 @@ class Connection():
                     print('Emulating:', raw_event)
                     self._socket = FakeSocket()
                     #event = Event(self, raw_event)
-                    self.eventhandler(event)
+                    self.eventhandler(raw_event)
 
                 except Exception as e:
                     import sys
