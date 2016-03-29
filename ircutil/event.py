@@ -15,13 +15,13 @@ class Event():
         self.send.nick(nick)
 
     def parse_addr( self, addr ):
-        self.addr = addr.lstrip(':')
+        self.addr = addr[1:] if addr and addr[0] == ':' else addr
         if '@' in self.addr:
             # nick!user@example.com
             at_split = self.addr.split('@')
             self.host = at_split[1] if len(at_split) > 1 else ''
             ex_split = at_split[0].split('!')
-            self.nick = ex_split[0].lstrip(':')
+            self.nick = ex_split[0]#.lstrip(':') # don't use lstrip
             self.ident =  ex_split[1] if len(ex_split) > 1 else ''
         else:
             # :server.addr
@@ -90,11 +90,17 @@ class Event():
         self.arg7 = self.split[7] if len(self.split) > 7 else ''
         
         # get full string of event starting from argX
-        self.args1 = raw_event.split(' ', 1)[1].lstrip(':') if len(self.split) > 1 else ''
-        self.args2 = raw_event.split(' ', 2)[2].lstrip(':') if len(self.split) > 2 else ''
-        self.args3 = raw_event.split(' ', 3)[3].lstrip(':') if len(self.split) > 3 else ''
-        self.args4 = raw_event.split(' ', 4)[4].lstrip(':') if len(self.split) > 4 else ''
-        self.args5 = raw_event.split(' ', 5)[5].lstrip(':') if len(self.split) > 5 else ''
+        self.args1 = raw_event.split(' ', 1)[1] if len(self.split) > 1 else ''
+        self.args2 = raw_event.split(' ', 2)[2] if len(self.split) > 2 else ''
+        self.args3 = raw_event.split(' ', 3)[3] if len(self.split) > 3 else ''
+        self.args4 = raw_event.split(' ', 4)[4] if len(self.split) > 4 else ''
+        self.args5 = raw_event.split(' ', 5)[5] if len(self.split) > 5 else ''
+
+        self.args1 = self.args1[1:] if self.args1 and self.args1[0] == ':' else self.args1
+        self.args2 = self.args2[1:] if self.args2 and self.args2[0] == ':' else self.args2
+        self.args3 = self.args3[1:] if self.args3 and self.args3[0] == ':' else self.args3
+        self.args4 = self.args4[1:] if self.args4 and self.args4[0] == ':' else self.args4
+        self.args5 = self.args5[1:] if self.args5 and self.args5[0] == ':' else self.args5
 
         self.addr = ''
         self.chan = ''
@@ -190,7 +196,7 @@ class Event():
 
 
             elif self.arg1 == 'JOIN':
-                self.chan = self.arg2.lstrip(':')
+                self.chan = self.arg2[1:] if self.arg2 and self.arg2[0] == ':' else self.arg2
                 self.chat = self.chan
 
 
@@ -206,9 +212,9 @@ class Event():
                 # :nick!ident@example.com MODE #ircutil +oo nick nick2
                 # :nick!ident@example.com MODE #ircutil +p 
                 # :nick!identy@example.com MODE #ircutil +b *!b@z
-                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
+                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else self.arg2
                 self.chat = self.chan or self.nick
-                self.mode = self.arg3.lstrip(':')
+                self.mode = self.arg3 if self.arg3 and self.arg3[0] == ':' else self.arg3
                 if len(self.mode) == 2:
                     # only one mode was set this event, so process normally
                     self.target = self.arg4
@@ -271,12 +277,13 @@ class Event():
 
             elif self.arg1 in ('PRIVMSG', 'NOTICE'):
                 # chan needs to be string
-                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
+                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else self.arg2
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
                 self.MSG = True if self.arg1 == 'PRIVMSG' else False
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
-                    self.msg = self.arg3.lstrip(':').strip( chr(1) )
+                    self.msg = self.arg3[1:-1]
+                    self.msg = self.msg[1:] if self.msg and self.msg[0] == ':' else self.msg
                     if self.arg1 == 'PRIVMSG':
                         self.CTCP = True
                         if self.msg == 'VERSION':
