@@ -135,11 +135,13 @@ class Event():
             # untested in this version
             self.type = 'ERROR'
             self.msg = self.args1
+            self.ERROR = True
 
         elif self.arg0 == 'NOTICE':
             # untested in this version, but some notices may look like this
             self.type = 'NOTICE'
             self.msg = self.args1
+            self.NOTICE = True
 
 
         elif self.arg1:
@@ -277,16 +279,17 @@ class Event():
 
             elif self.arg1 in ('PRIVMSG', 'NOTICE'):
                 # chan needs to be string
-                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else self.arg2
+                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.msg = self.args3
                 self.MSG = True if self.arg1 == 'PRIVMSG' else False
+                self.NOTICE = not self.MSG
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
-                    self.msg = self.arg3[1:-1]
-                    self.msg = self.msg[1:] if self.msg and self.msg[0] == ':' else self.msg
+                    self.msg = self.msg[1:-1]
+                    #self.msg = self.msg[1:] if self.msg and self.msg[0] == ':' else self.msg # seems like colon is outside chr(1)
                     if self.arg1 == 'PRIVMSG':
                         self.CTCP = True
-                        if self.msg == 'VERSION':
+                        if self.msg.upper() == 'VERSION':
                             self.send.ctcp( self.chat, 'VERSION', self._connection._version, reply=True )
                         elif self.msg.startswith('ACTION '):
                             self.ACTION = True
