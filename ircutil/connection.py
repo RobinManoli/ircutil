@@ -71,7 +71,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil 0.95 beta"
+        self._version = "python ircutil 0.96 beta"
 
     def _loop(self):
         while True:

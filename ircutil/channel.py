@@ -170,13 +170,4 @@ def update(chans, event):
 
 
     chan.update_all()            
-    
 
-"""
-[1456249763] :nick!~user@ip JOIN :#philosophy
-[1456249763] :irc.portlane.se 332 gak #philosophy :topic ...
-[1456249763] :irc.portlane.se 333 gak #philosophy nik!usr@ip 1454850268
-[1456249763] :irc.portlane.se 353 gak = #philosophy :a b @c
-[1456249763] :irc.portlane.se 366 gak #philosophy :End of NAMES list.
-
-"""
