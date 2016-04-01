@@ -5,6 +5,9 @@ class Send():
     def __init__(self, connection):
         self._connection = connection
 
+    def action(self, chat, msg=''):
+        self.ctcp(chat, 'ACTION', msg)
+
     def ban(self, chan, mask):
         self.mode( '+b', chan, mask )
 

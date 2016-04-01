@@ -51,6 +51,7 @@ class Connection():
         self._socket = None
         self.send = Send(self)
 
+        self.action = self.send.action
         self.ban = self.send.ban
         self.ctcp = self.send.ctcp
         self.deop = self.send.deop
