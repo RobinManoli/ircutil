@@ -265,6 +265,7 @@ class Event():
 
             elif self.arg1 == 'NICK':
                 self.newnick = self.arg2 or 'UNKNOWN'
+                self.newnick = self.newnick[1:] if self.newnick and self.newnick[0] == ':' else self.newnick
                 if self.nick == self._connection._nick:
                     self._connection._nick = self.newnick
                     # todo: this code worked, but was delayed until next ping:
