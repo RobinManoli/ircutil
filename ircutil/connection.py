@@ -1,3 +1,20 @@
+#	Copyright 2016 Robin Manoli (r at manoli.se)
+# 
+#	This file is part of Ircutil.
+#
+#	Ircutil is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU Lesser General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	Ircutil is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU Lesser General Public License for more details.
+#
+#	You should have received a copy of the GNU Lesser General Public License
+#	along with Ircutil.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import print_function
 
 import sys
@@ -72,7 +89,8 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "python ircutil 0.96 beta"
+        self._version = "Python Ircutil 0.97 Beta"
+        self._author = "Robin Manoli (r at manoli.se)"
 
     def _loop(self):
         while True:
@@ -119,6 +137,7 @@ class Connection():
 
         with open(file) as f:
             for raw_event in f.readlines():
+                # todo: don't strip here, because trailing spaces might matter?
                 raw_event = raw_event.strip()
                 try:
                     print('Emulating:', raw_event)
@@ -159,6 +178,7 @@ class Connection():
         def do_connect(server):
             import sys
             self.echo( 'Running Python ' + str(sys.version) )
+            self.echo( '%s - created by %s' % (self._version, self._author) )
 
             self.chans = {} # clear chans on reconnects
             server_args = server.split()
