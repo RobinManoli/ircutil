@@ -1,4 +1,4 @@
-# ircutil.py
+# Python Ircutil
 Simplistic abstraction of IRC written in Python.
 
 Very simple implementation that takes you very fast into coding your own stuff.
