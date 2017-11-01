@@ -89,7 +89,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "Python Ircutil 0.97 Beta"
+        self._version = "Python Ircutil 0.98 Beta"
         self._author = "Robin Manoli (r at manoli.se)"
 
     def _loop(self):
@@ -246,3 +246,47 @@ class Connection():
                     server = self.servers[index + 1]
                 self._server = server
 
+
+    # decorator
+    #def trigger(self, func):
+    #    "Adds function as a trigger."
+    #    self.triggers.append(func)
+
+
+    # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
+    def trigger(self, expr=None):
+        """
+        @mybot.trigger() # this decorator adds the trigger to all events
+        @mybot.trigger(lambda event: event.MSG) # this decorator runs the trigger on events when lambda is True
+        """
+        #print('trigger', expr, callable(expr)) # debug
+
+        def trigger_decorator(func):
+            #print('trigger_decorator') # debug
+
+            if callable(expr):
+                # decorator call had a lambda arg
+                def func_wrapper(event):
+                    #print('func_wrapper', event) # debug
+                    if expr(event):
+                        # trigger if decorator lambda is True
+                        func(event)
+                # so trigger it through func_wrapper
+                self.triggers.append(func_wrapper)
+            else:
+                # decorator call was used without args such as: @mybot.trigger()
+                # so always trigger it
+                self.triggers.append(func)
+
+        return trigger_decorator
+
+
+        """print("trigger", expr)
+        def trigger_decorator(func):
+            print("trigger_decorator")
+            from functools import wraps
+            @wraps(func)
+            def func_wrapper(expr):
+                print( "func_wrapper")
+            return func_wrapper
+        return trigger_decorator"""
