@@ -4,7 +4,7 @@ Simplistic abstraction of IRC written in Python.
 Very simple implementation that takes you very fast into coding your own stuff.
 
 ## Features
-- parses IRC data into event objects (in a simple and slightly higher abstraction than IRC itself)
+- parses IRC data into easy-to-use event objects
 - parses multiple modes into single events (+oo becomes two separate op events)
 - finds a free nick when nick in use when connecting to server
 - reconnects (optionally) to server list when disconnected
