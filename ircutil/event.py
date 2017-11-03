@@ -122,11 +122,12 @@ class Event():
         self.addr = ''
         self.chan = ''
         self.chat = ''
+        self.ctcp = ''
         self.host = ''
         self.ident = ''
         self.mode = ''
         self.nick = ''
-        self.newnick = ''
+        #self.newnick = '' # replaced by self.target
         self.target = ''
         self.type = ''
         self.msg = ''
@@ -281,10 +282,10 @@ class Event():
 
 
             elif self.arg1 == 'NICK':
-                self.newnick = self.arg2 or 'UNKNOWN'
-                self.newnick = self.newnick[1:] if self.newnick and self.newnick[0] == ':' else self.newnick
+                self.target = self.arg2 or 'UNKNOWN'
+                self.target = self.target[1:] if self.target and self.target[0] == ':' else self.target
                 if self.nick == self._connection._nick:
-                    self._connection._nick = self.newnick
+                    self._connection._nick = self.target
                     # todo: this code worked, but was delayed until next ping:
                     self.send.echo("I'm now known as: " + self._connection._nick)
 
@@ -303,13 +304,15 @@ class Event():
                 self.MSG = True if self.arg1 == 'PRIVMSG' else False
                 self.NOTICE = not self.MSG
                 if self.msg.startswith( chr(1) ) and self.msg.endswith( chr(1) ):
-                    self.msg = self.msg[1:-1]
+                    self.msg = self.msg[1:-1] # remove chr(1)
+                    self.ctcp = self.msg.upper().split(' ', 1)[0]
+                    self.msg = self.msg[ len(self.ctcp) + 1: ] # remove self.ctcp + one space from self.msg
                     #self.msg = self.msg[1:] if self.msg and self.msg[0] == ':' else self.msg # seems like colon is outside chr(1)
                     if self.arg1 == 'PRIVMSG':
                         self.CTCP = True
-                        if self.msg.upper() == 'VERSION':
+                        if self.ctcp == 'VERSION':
                             self.send.ctcp( self.chat, 'VERSION', self._connection._version, reply=True )
-                        elif self.msg.startswith('ACTION '):
+                        elif self.ctcp == "ACTION":
                             self.ACTION = True
                     else:
                         self.CTCP_REPLY = True
