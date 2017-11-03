@@ -58,6 +58,7 @@ class Connection():
         self.chans = {} # keeps records of channel users, topics and modes
 
         self.triggers = [] # list of functions to run on each irc event
+        self.prioritized_triggers = dict()
         self.eventhandler = self._eventhandler # override this to create custom event handler, that receives sendevent argument from self.send (remember to run self.triggers)
         self._connected = False
         self._emulated = False
@@ -131,6 +132,7 @@ class Connection():
         """
         self._emulated = True
         self._nick = self.nick
+        self.sort_triggers() # do once before starting
 
         class FakeSocket():
             def send(self, *args):
@@ -176,6 +178,8 @@ class Connection():
         irc.freenode.net ipv6 password=mypassword
         irc.freenode.net password= # do not send default password
         """
+
+        self.sort_triggers() # do once before starting
         def do_connect(server):
             import sys
             self.echo( 'Running Python ' + str(sys.version) )
@@ -255,7 +259,7 @@ class Connection():
 
 
     # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
-    def trigger(self, expr=None):
+    def trigger(self, expr=None, priority=0):
         """
         @mybot.trigger() # this decorator adds the trigger to all events
         @mybot.trigger(lambda event: event.MSG) # this decorator runs the trigger on events when lambda is True
@@ -263,6 +267,10 @@ class Connection():
         #print('trigger', expr, callable(expr)) # debug
 
         def trigger_decorator(func):
+            # init list for current priority
+            if priority not in self.prioritized_triggers.keys():
+                self.prioritized_triggers[priority] = []
+
             #print('trigger_decorator') # debug
 
             if callable(expr) or type(expr) == type('str'):
@@ -276,21 +284,25 @@ class Connection():
                         # trigger if event.ATTR is True and expr is 'ATTR', short for lambda event: event.ATTR
                         func(event)
                 # so trigger it through func_wrapper
-                self.triggers.append(func_wrapper)
+                #self.triggers.append(func_wrapper) # old unprioritized way
+                self.prioritized_triggers[priority].append(func_wrapper)
+                #print('adding func with prio', priority, expr) # debug
             else:
                 # decorator call was used without args such as: @mybot.trigger()
                 # so always trigger it
-                self.triggers.append(func)
+                #self.triggers.append(func)  # old unprioritized way
+                self.prioritized_triggers[priority].append(func)
+                #print('adding func with prio', priority, expr) # debug
 
         return trigger_decorator
 
 
-        """print("trigger", expr)
-        def trigger_decorator(func):
-            print("trigger_decorator")
-            from functools import wraps
-            @wraps(func)
-            def func_wrapper(expr):
-                print( "func_wrapper")
-            return func_wrapper
-        return trigger_decorator"""
+    def sort_triggers(self):
+        self.triggers = [] # empty triggers # and break old functionality of mybot.triggers.append()
+        priorities = sorted( self.prioritized_triggers.keys(), reverse=True )
+        for prio in priorities:
+            self.triggers += self.prioritized_triggers[prio]
+            #print('added prio, len:', prio, len(self.prioritized_triggers[prio])) # debug
+        #print()
+        #print( len(self.triggers), 'triggers' ) # debug
+
