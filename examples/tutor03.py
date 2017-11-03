@@ -6,13 +6,7 @@ mybot = ircutil.Connection()
 mybot.nick = "ezBot"
 mybot.server = "irc.freenode.org"
 
-@mybot.trigger()
-def raw(event):
-    # See everything from irc server and ircutil
-    print(event.raw)
-
-
-# --- new code starts here ---
+# --- moved and edited the raw function down to new code ---
 
 # Run the function below on welcome events.
 # The welcome event happens when you are fully connected on IRC.
@@ -57,8 +51,15 @@ def topic(event):
 def imitate(event):
     mybot.ctcp(event.chat, event.ctcp, "too %s" % event.msg)
 
-# --- new code ends here ---
+# --- new code starts here ---
 
+@mybot.trigger()
+def raw(event):
+    # since the emulator already prints out raw irc data, only print out ircutil data
+    # which starts with <<< (sent IRC commands) or >>> (info from Ircutil)
+    if event.raw.startswith(('<<<','>>>')):
+        print(event.raw)
 
-# connect to IRC
-mybot.connect()
+# emulate IRC
+mybot.emulate('ircdata.txt')
+#mybot.emulate('/path/to/ircdata.txt') # you can use the absolute path

@@ -1,0 +1,9 @@
+:weber.freenode.net 001 ezBot :Welcome to the freenode Internet Relay Chat Network ezBot
+:ezBot!~ircutil@some-domain.com JOIN #ircutil
+:dude!~dude@some-domain.com JOIN #ircutil
+:dude!~dude@some-domain.com PRIVMSG #ircutil :hi
+:dude!~dude@some-domain.com PRIVMSG ezBot :hi
+:dude!~dude@some-domain.com KICK #ircutil ezBot :ezBot
+:dude!~dude@some-domain.com PRIVMSG #ircutil :VERSION
+:dude!~dude@some-domain.com TOPIC #ircutil :this is the new topic
+:dude!~dude@some-domain.com PRIVMSG ezBot :ACTION does something

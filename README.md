@@ -1,11 +1,11 @@
 # Python Ircutil
-Simplistic abstraction of IRC written in Python.
-
-Very simple implementation that takes you very fast into coding your own stuff.
+Simplistic, powerful and lightweight abstraction of IRC, written in Python.
+The point of this utility is to connect to IRC and take you very fast into coding your own stuff.
+The only magic that happens is that Ircutil connects, stays connected (and optionally reconnects).
 
 ## Features
 - parses IRC data into easy-to-use event objects
-- parses multiple modes into single events (+oo becomes two separate op events)
+- parses multiple IRC modes into single events (+oo becomes two separate op events)
 - finds a free nick when nick in use when connecting to server
 - reconnects (optionally) to server list when disconnected
 - channel object which keeps track of modes, ops, voices and normal users (half-ops not yet implemented)
@@ -14,56 +14,453 @@ Very simple implementation that takes you very fast into coding your own stuff.
 - emulate() function that acts as receiving a set of raw IRC events written in a text file
 - works with ipv4 and ipv6
 - works with python 2 and 3
-- flood protection
+- simple flood protection
 - can be used both to create bots and clients
-
-## Example Code
-Setting up a bot:
-```
-import ircutil
-
-mybot = ircutil.Connection()
-mybot.nick = "ezBot" # main nick
-mybot.server = "irc.freenode.org" # main server
-```
-Next, create a function that displays all IRC data, and add it to triggers:
-```
-def raw(event):
-    "See everything from IRC server and ircutil"
-    print (event.raw)
-mybot.triggers.append(raw)
-```
-Now, respond to anyone saying hi (in private or channel):
-```
-def respond(event):
-    if event.MSG and event.msg == "hi":
-        # chat and event.chat refers to either a channel or nickname,
-        # to send the message to
-        mybot.msg(chat=event.chat, msg=event.nick + ": hi")
-mybot.triggers.append(respond)
-```
-And connect to IRC:
-```
-mybot.connect()
-```
-
-
-## Getting Started
-
-1. Make a copy of examples/get_started_bot.py to the same folder as README.md.
-2. Edit your copy and add your IRC server information.
-3. Run the script and see that it connects to the server, joins the channel and responds to "hi".
-
-
-## Tutorial
-
-1. Read and understand the very simple examples/get_started_bot.py
-2. Read, understand and try out examples/tutorbot.py (read the whole file).
-3. Create trigger functions that print vars(event), vars(mybot), vars(mybot.chans) and repr(event.raw) to get a good overview of ircutil and IRC.
-4. Learn to use mybot.emulate() (see tutorbot.py) instead of mybot.connect() to test your scripts.
-
 
 ## Not Included (Nor Planned)
 - DCC chat/sends
 - Threads
 - SSL/TLS
+
+
+# Tutorial
+This tutorial is based on Python 3. If you want to use Python 2 you can change the shebang to something like:
+```
+#! /usr/bin/env python2.7
+```
+and make print work as a function (add this line under the shebang above):
+```
+from __future__ import print_function
+```
+
+
+## Getting Started
+The first thing to do is only to connect to IRC (to make sure you have the right IRC server address and your IRC ports open), from examples/tutor01.py:
+```
+#!/usr/bin/python3
+
+"""
+Simplistic bot that connects to IRC and prints what happens.
+"""
+
+import ircutil
+
+mybot = ircutil.Connection() # create a connection
+
+# bot setup
+mybot.nick = "ezBot" # the bot'snick
+mybot.server = "irc.freenode.org" # the server to connect to
+
+# handle IRC events
+@mybot.trigger() # run the function below on all IRC events
+def raw(event):
+    # See everything from IRC server and ircutil
+    print(event.raw) # print the event as raw, unprocessed text
+
+# now connect to IRC, stay connected and reconnect automatically
+mybot.connect()
+```
+When you run this code above you should see some text printed on the screen, similar to what you see when you connect with an IRC client.
+There might be a lot of text if you wait for the bot to connect fully.
+```
+:card.freenode.net NOTICE * :*** Looking up your hostname...
+:card.freenode.net NOTICE * :*** Checking Ident
+:card.freenode.net NOTICE * :*** Found your hostname
+```
+Press CTRL+C to stop the bot.
+
+
+## Handling Events
+IRC is based on events such as joins, quits, messages, modes and so on.
+Ircutil handles events mainly with trigger decorators, as you could see in the previous example.
+So when you want a function to run on all IRC events, you decorate it like this:
+```
+@mybot.trigger()
+```
+Usually however, you only want your function to run on certain events. To do that you use the event object inside a lambda function:
+```
+@mybot.trigger(lambda event: event.MSG)
+def myfunc(event):
+    ...
+```
+A lambda function is used because you want to wait until the event happens before you run the function.
+event.MSG is True if the event is a message (PRIVMSG in raw IRC, which also includes channel messages and CTCP requests).
+The function myfunc is only called on events where the lambda function is True - in this case if the event is a message.
+
+Here is some basic usage of handling events, from examples/tutor02.py:
+```
+#!/usr/bin/python3
+
+import ircutil
+
+mybot = ircutil.Connection()
+mybot.nick = "ezBot"
+mybot.server = "irc.freenode.org"
+
+@mybot.trigger()
+def raw(event):
+    # See everything from irc server and ircutil
+    print(event.raw)
+
+
+# --- new code starts here ---
+
+# Run the function below on welcome events.
+# The welcome event happens when you are fully connected on IRC.
+@mybot.trigger(lambda event: event.WELCOME)
+def autojoin(event):
+    mybot.join('#ircutil') # join an IRC channel
+
+# Run the function below on message events, respond when the message is "hi"
+@mybot.trigger(lambda event: event.MSG and event.msg == "hi")
+def respond(event):
+    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    mybot.msg(chat=event.chat, msg="%s: hi" %event.nick)
+
+# Run the function below on join events except when mybot joins a channel
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+@mybot.trigger(lambda event: event.JOIN and event.nick != mybot._nick)
+def greet(event):
+    mybot.msg(chat=event.chan, msg="%s: hi" %event.nick)
+
+# Run the function below when mybot is kicked
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+@mybot.trigger(lambda event: event.KICK and event.target == mybot._nick)
+def rejoin(event):
+    mybot.join(event.chan)
+
+# Run the function below when receiving a CTCP request. Also note that CTCP requests are treated as messages, so event.MSG is True too.
+@mybot.trigger(lambda event: event.CTCP)
+def ctcp_reply(event):
+    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    mybot.ctcp(event.chat, event.ctcp, "my CTCP", reply=True) # do a CTCP reply
+    mybot.ctcp(event.chat, event.ctcp) # make a CTCP request
+    print(event.chat, "%s just sent a CTCP %s" % (event.nick, event.msg))
+
+# Run the function below when a topic is set.
+@mybot.trigger("TOPIC") # short for lambda event: event.TOPIC
+def topic(event):
+    # print the newly set topic
+    print("new topic set:", event.msg)
+
+# Run the function below when someone does a /me action
+@mybot.trigger("ACTION") # short for lambda event: event.ACTION
+def imitate(event):
+    mybot.ctcp(event.chat, event.ctcp, "too %s" % event.msg)
+
+# --- new code ends here ---
+
+
+# connect to IRC
+mybot.connect()
+```
+A point to notice is that @mybot.trigger(...) adds its function to the end of triggers. In other words a function that is written before another will also trigger before the other.
+
+## Emulating IRC
+When writing an IRC bot or script you usually want to test it often.
+Instead of setting up your own server and connecting to IRC all the time you can use the emulator function of ircutil, as it is much faster.
+
+To use the emulator you need to have a text file of the IRC data to process.
+The IRC events which the previous bot of the tutorial triggered are stored at ircutil/examples/ircdata.txt - by just copy-pasting them from bot output text.
+
+Using the same code as the bot above, but changing mybot.connect() to mybot.emulate('ircdata.txt') will run the text data as if it were coming from an IRC server.
+
+Make sure to use the correct path for ircdata.txt.
+
+Also, note that when copy-pasting a CTCP request from the bot output, there are some hidden instances of the character '\x01' or chr(1) that might be lost.
+In ircdata.txt they have been added there with this command:
+```
+sed -i -e "s/ezBot \:VERSION/ezBot \:\x01VERSION\x01/" ircdata.txt
+```
+You can find the code in examples/tutor03.py.
+
+
+## User and channel data and functions
+Example code from examples/tutor04.py:
+```
+#!/usr/bin/python3
+
+import ircutil
+
+mybot = ircutil.Connection()
+mybot.nick = "ezBot"
+mybot.server = "irc.freenode.org:6665"
+
+mybot.nicks = ['|ezBot|', 'ezBot^'] # list of alternative nicks (if mybot.nick is not available) - get current nick with mybot._nick
+mybot.ident = "ircutil" # ident in nick!ident@addr
+mybot.realname = "ircutil for easily coding irc in python"
+
+# list of alternative servers with optional ports.
+mybot.servers = ['irc.freenode.net:6666', 'irc.freenode.net'] # there is also mybot._server which contains the current connection's server
+mybot.password = '' # default password for mybot.server and mybot.servers
+mybot.ipv6 = False # whether to use ipv6 as default when not specifying (False is the default value)
+
+# --- triggers ---
+
+@mybot.trigger()
+def raw(event):
+    # See everything from irc server and ircutil
+    print(event.raw)
+
+@mybot.trigger(lambda event: event.WELCOME)
+def autojoin(event):
+    mybot.join('#ircutil')
+
+# Get user data when sending an !about message
+@mybot.trigger(lambda event: event.MSG and event.msg == "!about")
+def about(event):
+    mybot.notice(event.chat, "your nick is %s" % event.nick)
+    mybot.msg(event.chat, "your addr is %s" % event.addr)
+    mybot.msg(event.chat, "your ident is %s" % event.ident)
+    mybot.msg(event.chat, "your host is %s" % event.host)
+
+# Run the function below when a message that starts with !nick is received, and make sure there is text data after the text !nick
+@mybot.trigger(lambda event: event.MSG and event.msg.startswith("!nick") and len(event.msg.strip()) > len("!nick"))
+def change_nick(event):
+    # change nick to the text after !nick
+    newnick = event.msg.split()[1]
+    mybot.newnick(newnick)
+
+
+
+"""
+event.target
+            is the nick of the one being kicked on the KICK event.
+            is the nick of the one receiving OP/DEOP/VOICE/DEVOICE.
+            is the mask for the BAN/UNBAN events (or other events with masks).
+            is the key for the KEY event.
+
+event.type is the raw IRC command of the event, which is usually a capital word
+           (such as JOIN or QUIT), but sometimes a number
+
+"""
+
+mybot.connect()
+```
+
+## Channel Modes
+Note that mybot.chans contains all channels that mybot is in, with all users. See the reference below.
+```
+#!/usr/bin/python3
+
+import ircutil
+import fnmatch
+
+mybot = ircutil.Connection()
+mybot.nick = "ezBot"
+mybot.server = "irc.freenode.org:6665"
+
+@mybot.trigger()
+def raw(event):
+    # See everything from irc server and ircutil
+    print(event.raw)
+
+@mybot.trigger(lambda event: event.WELCOME)
+def autojoin(event):
+    mybot.join('#ircutil')
+
+# trigger on chan modes set by others
+@mybot.trigger(lambda event: event.MODE and event.nick != mybot._nick)
+def mode(event):
+    # imitate mode just being set
+    mybot.mode(event.mode, event.chan, event.target)
+
+# create a set of masks with corresponding modes
+# this is for the purpose of this tutorial
+# should be using a database so that new masks are saved and can be added when the bot is still connected
+masks = dict()
+masks["*"] = "+v" # give voice to everyone
+masks["*!*@op-ip-addr.com"] = "+o" # give op to this ip/domain
+masks["*!*@ban-ip-addr.com"] = "+b" # ban this ip/domain
+@mybot.trigger("JOIN")
+def auto_mode(event):
+    for mask in masks.keys():
+        if fnmatch.fnmatch( event.addr, mask ):
+            mode = masks[mask] # +v or +o or +b
+            if 'b' in mode:
+                mybot.mode(mode, event.chan, mask)
+            else:
+                # you could more explicitly use mybot.op, mybot.deop, etc
+                mybot.mode(mode, event.chan, event.nick)
+
+# get op back in empty channel, if op has been lost
+# monitor QUIT, PART and KICK events
+@mybot.trigger(lambda event: event.nick != mybot._nick and (event.QUIT or event.PART or event.KICK))
+def claim(event):
+    # on part and kick events, only the channel where it occurred needs to be checked
+    # but for quit events, all channels with the user who quit must be checked
+    # so, create a list of channels to check
+    chans = [ event.chan.lower() ] if event.chan else mybot.chans.keys()
+    for chan in chans:
+        Chan = mybot.chans[chan] # get the channel object
+        # Chan.all contains all users of the channel, and Chan.ops contains all ops
+        # so if there is only one user and mybot doesn't have op, cycle the chan
+        if len( Chan.all ) == 1 and not mybot._nick in Chan.ops:
+            mybot.part( chan )
+            mybot.join( chan )
+
+mybot.connect()
+```
+
+
+## Custom Connection Loops
+If you don't want Ircutil to automatically reconnect, send the server parameter:
+```
+mybot.connect('irc.freenode.net')
+```
+Connections can handle certain args. These args also work for mybot.server and mybot.servers.
+```
+mybot.connect('irc.freenode.net:6668') # with port
+mybot.connect('irc.freenode.net:6668 ipv6') # with port and server specific ipv6
+mybot.connect('irc.freenode.net ipv4') # with server specific ipv4
+mybot.connect('irc.freenode.net password=mypassword') # with server specific password
+mybot.connect('irc.freenode.net password=') # with server specific omitting password
+```
+
+## Going Deeper
+To learn more about the Ircutil and its events you can use vars(mybot) on the event.WELCOME, vars(event) for any event you want to know more about, and vars(mybot.chans) to see channel data.
+
+
+# Reference
+
+## IRC Commands
+```
+print( vars(mybot) ) # for a full list!
+
+mybot.ban('#mychan', '*!*@banned-user.com')
+
+mybot.connect() # Connects to mybot.server, and if disconnected it connects to mybot.servers.
+If you don't want to automatically reconnect you can do a simple connect by sending a server parameter: mybot.connect('irc.freenode.net')
+# mybot.connect('irc.freenode.net:6668') # or with port
+# mybot.connect('irc.freenode.net:6668 ipv6') # or with port and server specific ipv6
+# mybot.connect('irc.freenode.net ipv4') # or with server specific ipv4
+# mybot.connect('irc.freenode.net password=mypassword') # or with server specific password
+# mybot.connect('irc.freenode.net password=') # or with server specific omitting password
+
+mybot.ctcp('nick', 'VERSION', msg='', reply=False) # Sends a ctcp command. If reply is set to True, it will be a ctcp reply.
+
+mybot.deop('#mychan', 'nick')
+
+mybot.devoice('#mychan', 'nick')
+
+mybot.echo('my message') # Sends text to event handler. Can be used instead of print and handled the same way as other events.
+
+mybot.join('#mychan')
+
+mybot.me('#mychan', 'my message') # First parameter can also be a nick.
+
+mybot.msg('#mychan', 'my message') # First parameter can also be a nick.
+
+mybot.mode('+k', '#mychan', 's3cr3t') # First parameter can also be mybot's nick.
+
+mybot.newnick('newnick') # Send IRC nick command. Changes nick if newnick is available. Current nick is availabe as mybot._nick
+
+mybot.notice('#mychan', 'my message') # First parameter can also be a nick.
+
+mybot.op('#mychan', 'nick')
+
+mybot.part('#mychan', 'my message')
+
+mybot.voice('#mychan', 'nick')
+
+mybot.raw('JOIN #mychan') # Send a raw IRC command.
+
+mybot.topic('#mychan', 'my topic')
+
+mybot.unban('#mychan', '*!*@banned-user.com')
+
+mybot.quit('my message')
+```
+
+
+## Events
+```
+print( vars(event) ) # for a full list!
+```
+self.ACTION # True on /me actions
+self.BAN 
+self.CTCP # True on CTCP requests and /me actions
+self.CTCP_REPLY
+self.DEOP 
+self.DEVOICE 
+self.DEHALFOP 
+self.ECHO 
+self.ERROR 
+self.HALFOP 
+self.JOIN 
+self.KICK 
+self.MODE 
+self.MSG ¤ True on chat messages and CTCP requests
+self.NAMREPLY 
+self.NICK 
+self.NOTICE # True on notices and CTCP replies
+self.OP 
+self.PART 
+self.PING 
+self.PRIVMSG 
+self.QUIT 
+self.SENT 
+self.TOPIC 
+self.UNBAN 
+self.VOICE 
+self.WELCOME 
+```
+
+```
+
+### IRC Event Data
+```
+event.addr # is the nick!ident@hose of the one who performed the command, or the server currently connected to.
+
+event.chan # is the channel (or empty string if no channel was involved).
+
+event.chat # responds to corresponding chat room (either event.nick or event.chan) of the event.
+
+event.ctcp # the ctcp type (VERSION, ACTION, etc) on CTCP requests/replies
+
+event._connection # is a pointer to the connection of the event, which can be used to access the connection inside functions in separate files from your script:
+def myoutsidefunc(event):
+    mybot = event._connection
+    mybot.quit()
+
+event.host # is the host (in nick!ident@host) of event.addr.
+
+event.ident # is the ident (in nick!ident@host) of event.addr.
+
+event.mode # is the mode being set
+
+event.msg # is the message text of a message, ctcp request, or the topic text, or kick/ban text.
+
+event.newnick # is the new nick being set
+
+event.nick # is the nick of the one who performed the event (or empty string if no other user was involved).
+
+event.target
+# is the nick of the one being kicked on the KICK event.
+# is the nick of the one receiving OP/DEOP/VOICE/DEVOICE.
+# is the mask for the BAN/UNBAN events (or other events with masks).
+# is the key for the KEY event.
+# is the new nick on the NICK event
+
+event.type # is the raw IRC command of the event, which is usually a capital word (such as JOIN or QUIT), but sometimes a number
+
+```
+
+### The Channel Objects
+A Connection contains all joined channels in .chans (such as mybot.chans), where .chans is a dictionary, and the keys are the channel names in lower case.
+Each channel contains a channel object such as this:
+```
+self.chan = chan # channel name
+self.ops = [] # list of channel ops
+self.halfops = []
+self.voices = []
+self.users = []
+self.all = [] # list of all channel users
+self.topic = ""
+self.topicsetter = ""
+self.topictime = None
+self.modes = ""
+self.k = '' # key
+self.b = [] # bans
+
+```
