@@ -78,6 +78,7 @@ class Connection():
         self.me = self.send.me
         self.msg = self.send.msg
         self.mode = self.send.mode
+        self.newnick = self.send.nick
         self.notice = self.send.notice
         self.op = self.send.op
         self.part = self.send.part
