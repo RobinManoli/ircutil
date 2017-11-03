@@ -89,7 +89,7 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "Python Ircutil 0.98 Beta"
+        self._version = "Python Ircutil 0.99 Beta"
         self._author = "Robin Manoli (r at manoli.se)"
 
     def _loop(self):
@@ -264,12 +264,15 @@ class Connection():
         def trigger_decorator(func):
             #print('trigger_decorator') # debug
 
-            if callable(expr):
+            if callable(expr) or type(expr) == type('str'):
                 # decorator call had a lambda arg
                 def func_wrapper(event):
                     #print('func_wrapper', event) # debug
-                    if expr(event):
+                    if callable(expr) and expr(event):
                         # trigger if decorator lambda is True
+                        func(event)
+                    elif type(expr) == type('str') and getattr(event, expr.upper()):
+                        # trigger if event.ATTR is True and expr is 'ATTR', short for lambda event: event.ATTR
                         func(event)
                 # so trigger it through func_wrapper
                 self.triggers.append(func_wrapper)
