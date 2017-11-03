@@ -45,17 +45,4 @@ def change_nick(event):
     mybot.newnick(newnick)
 
 
-
-"""
-event.target
-            is the nick of the one being kicked on the KICK event.
-            is the nick of the one receiving OP/DEOP/VOICE/DEVOICE.
-            is the mask for the BAN/UNBAN events (or other events with masks).
-            is the key for the KEY event.
-
-event.type is the raw IRC command of the event, which is usually a capital word
-           (such as JOIN or QUIT), but sometimes a number
-
-"""
-
 mybot.connect()

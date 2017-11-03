@@ -86,12 +86,14 @@ def myfunc(event):
 A lambda function is used because you want to wait until the event happens before you run the function.
 
 For example, event.MSG is True if the event is a message (PRIVMSG in raw IRC, which also includes channel messages and CTCP requests).
-The function myfunc is only called on events where the lambda function is True - in this case if the event is a message.
+The function myfunc is only called on events where the lambda function evaluates as true - in this case if the event is a message.
 
 In the simple case above, the function runs on all message events.
 If there are no other conditions than to run on a single type of event, you can remove the lambda and simplify the decorator above like this:
 ```
 @mybot.trigger("MSG")
+def myfunc(event):
+    ...
 ```
 
 Here is some basic usage of handling events, from examples/tutor02.py:
@@ -187,7 +189,7 @@ sed -i -e "s/ezBot \:VERSION/ezBot \:\x01VERSION\x01/" ircdata.txt
 You can find the code in examples/tutor03.py.
 
 
-## User and channel data and functions
+## User and server setup and data
 Example code from examples/tutor04.py:
 ```
 #!/usr/bin/python3
@@ -236,19 +238,6 @@ def change_nick(event):
     newnick = event.msg.split()[1]
     mybot.newnick(newnick)
 
-
-
-"""
-event.target
-            is the nick of the one being kicked on the KICK event.
-            is the nick of the one receiving OP/DEOP/VOICE/DEVOICE.
-            is the mask for the BAN/UNBAN events (or other events with masks).
-            is the key for the KEY event.
-
-event.type is the raw IRC command of the event, which is usually a capital word
-           (such as JOIN or QUIT), but sometimes a number
-
-"""
 
 mybot.connect()
 ```
@@ -397,7 +386,7 @@ mybot.quit('my message')
 ## Events
 ```
 print( vars(event) ) # for a full list!
-```
+
 self.ACTION # True on /me actions
 self.BAN 
 self.CTCP # True on CTCP requests and /me actions
@@ -427,11 +416,10 @@ self.VOICE
 self.WELCOME 
 ```
 
-```
-
 ### IRC Event Data
 ```
-event.addr # is the nick!ident@hose of the one who performed the command, or the server currently connected to.
+# the nick!ident@hose of the one who performed the command, or the server currently connected to.
+event.addr
 
 event.chan # is the channel (or empty string if no channel was involved).
 
@@ -465,7 +453,8 @@ event.target
 # is the key for the KEY event.
 # is the new nick on the NICK event
 
-# the raw IRC command of the event, which is usually a capital word (such as JOIN or QUIT), but sometimes a number
+# the raw IRC command of the event,
+# which is usually a capital word (such as JOIN or QUIT), but sometimes a number
 event.type
 
 ```
