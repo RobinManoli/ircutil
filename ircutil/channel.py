@@ -161,10 +161,10 @@ def update(chans, event):
 
     elif event.MODE:
         # chan flag modes
-        mode = event.mode[1]
-        if event.mode[0] == '+':
+        mode = event.mode[1] if len(event.mode) > 1 else ''
+        if event.mode and event.mode[0] == '+':
             chan.modes += mode
-        else:
+        elif event.mode:
             chan.modes = chan.modes.replace(mode, '')
 
     elif event.type == '324':

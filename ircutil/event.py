@@ -232,11 +232,12 @@ class Event():
                 # :nick!ident@example.com MODE #ircutil +oo nick nick2
                 # :nick!ident@example.com MODE #ircutil +p 
                 # :nick!identy@example.com MODE #ircutil +b *!b@z
-                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else self.arg2
+                # :ezBot_ MODE ezBot_ :i
+                self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.mode = self.arg3 if self.arg3 and self.arg3[0] == ':' else self.arg3
-                if len(self.mode) == 2:
-                    # only one mode was set this event, so process normally
+                if len(self.mode) < 3 or not self.chan:
+                    # only one or less mode was set this event, or it was not a channel mode, so process normally
                     self.target = self.arg4
                     if self.mode == '+o':
                         self.OP = True
@@ -285,6 +286,7 @@ class Event():
 
                     # process all multimodes before handling
                     for mode in modes:
+                        print('parsed multimode:', mode)
                         self.handle(mode)
                     # do not process this multi-mode event any further
                     return
