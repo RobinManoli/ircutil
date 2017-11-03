@@ -5,10 +5,10 @@ The only magic that happens is that Ircutil connects, stays connected (and optio
 
 ## Features
 - parses IRC data into easy-to-use event objects
-- parses multiple IRC modes into single events (+oo becomes two separate op events)
+- parses multiple IRC channel modes into single events (+oo becomes two separate op events)
 - finds a free nick when nick in use when connecting to server
 - reconnects (optionally) to server list when disconnected
-- channel object which keeps track of modes, ops, voices and normal users (half-ops not yet implemented)
+- channel objects which keep track of modes, ops, voices and normal users (half-ops not yet implemented)
 - handles server's password and server specific args for password and ipv4/ipv6
 - handles ctcp sending and replying
 - emulate() function that acts as receiving a set of raw IRC events written in a text file
@@ -48,7 +48,7 @@ import ircutil
 mybot = ircutil.Connection() # create a connection
 
 # bot setup
-mybot.nick = "ezBot" # the bot'snick
+mybot.nick = "ezBot" # the bot's nick
 mybot.server = "irc.freenode.org" # the server to connect to
 
 # handle IRC events
@@ -60,8 +60,8 @@ def raw(event):
 # now connect to IRC, stay connected and reconnect automatically
 mybot.connect()
 ```
-When you run this code above you should see some text printed on the screen, similar to what you see when you connect with an IRC client.
-There might be a lot of text if you wait for the bot to connect fully.
+When you run the code above you should see some text printed on the screen, similar to what you see when you connect with an IRC client.
+There might be a lot of text if you wait for the bot to connect fully. The text might look something like this:
 ```
 :card.freenode.net NOTICE * :*** Looking up your hostname...
 :card.freenode.net NOTICE * :*** Checking Ident
@@ -77,15 +77,22 @@ So when you want a function to run on all IRC events, you decorate it like this:
 ```
 @mybot.trigger()
 ```
-Usually however, you only want your function to run on certain events. To do that you use the event object inside a lambda function:
+Usually however, you only want your function to run on certain events, with certain conditions. To do that you use the event object inside a lambda function:
 ```
 @mybot.trigger(lambda event: event.MSG)
 def myfunc(event):
     ...
 ```
 A lambda function is used because you want to wait until the event happens before you run the function.
-event.MSG is True if the event is a message (PRIVMSG in raw IRC, which also includes channel messages and CTCP requests).
+
+For example, event.MSG is True if the event is a message (PRIVMSG in raw IRC, which also includes channel messages and CTCP requests).
 The function myfunc is only called on events where the lambda function is True - in this case if the event is a message.
+
+In the simple case above, the function runs on all message events.
+If there are no other conditions than to run on a single type of event, you can remove the lambda and simplify the decorator above like this:
+```
+@mybot.trigger("MSG")
+```
 
 Here is some basic usage of handling events, from examples/tutor02.py:
 ```
@@ -114,25 +121,30 @@ def autojoin(event):
 # Run the function below on message events, respond when the message is "hi"
 @mybot.trigger(lambda event: event.MSG and event.msg == "hi")
 def respond(event):
-    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    # event.chat is either the channel of the event,
+    # or if it was a private message - the nickname of the user who sent the message
     mybot.msg(chat=event.chat, msg="%s: hi" %event.nick)
 
 # Run the function below on join events except when mybot joins a channel
-# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary,
+# desired nick attempted to use on connect
 @mybot.trigger(lambda event: event.JOIN and event.nick != mybot._nick)
 def greet(event):
     mybot.msg(chat=event.chan, msg="%s: hi" %event.nick)
 
 # Run the function below when mybot is kicked
-# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary,
+desired nick attempted to use on connect
 @mybot.trigger(lambda event: event.KICK and event.target == mybot._nick)
 def rejoin(event):
     mybot.join(event.chan)
 
-# Run the function below when receiving a CTCP request. Also note that CTCP requests are treated as messages, so event.MSG is True too.
+# Run the function below when receiving a CTCP request.
+# Also note that CTCP requests are treated as messages, so event.MSG is True too.
 @mybot.trigger(lambda event: event.CTCP)
 def ctcp_reply(event):
-    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    # event.chat is either the channel of the event,
+    # or if it was a private message - the nickname of the user who sent the message
     mybot.ctcp(event.chat, event.ctcp, "my CTCP", reply=True) # do a CTCP reply
     mybot.ctcp(event.chat, event.ctcp) # make a CTCP request
     print(event.chat, "%s just sent a CTCP %s" % (event.nick, event.msg))
@@ -186,12 +198,14 @@ mybot = ircutil.Connection()
 mybot.nick = "ezBot"
 mybot.server = "irc.freenode.org:6665"
 
-mybot.nicks = ['|ezBot|', 'ezBot^'] # list of alternative nicks (if mybot.nick is not available) - get current nick with mybot._nick
+# get current nick with mybot._nick
+mybot.nicks = ['|ezBot|', 'ezBot^'] # list of alternative nicks (if mybot.nick is not available)
 mybot.ident = "ircutil" # ident in nick!ident@addr
 mybot.realname = "ircutil for easily coding irc in python"
 
 # list of alternative servers with optional ports.
-mybot.servers = ['irc.freenode.net:6666', 'irc.freenode.net'] # there is also mybot._server which contains the current connection's server
+# there is also mybot._server which contains the current connection's server
+mybot.servers = ['irc.freenode.net:6666', 'irc.freenode.net']
 mybot.password = '' # default password for mybot.server and mybot.servers
 mybot.ipv6 = False # whether to use ipv6 as default when not specifying (False is the default value)
 
@@ -214,7 +228,8 @@ def about(event):
     mybot.msg(event.chat, "your ident is %s" % event.ident)
     mybot.msg(event.chat, "your host is %s" % event.host)
 
-# Run the function below when a message that starts with !nick is received, and make sure there is text data after the text !nick
+# Run the function below when a message that starts with !nick is received,
+# and make sure there is text data after the text !nick
 @mybot.trigger(lambda event: event.MSG and event.msg.startswith("!nick") and len(event.msg.strip()) > len("!nick"))
 def change_nick(event):
     # change nick to the text after !nick
@@ -267,7 +282,8 @@ def mode(event):
 
 # create a set of masks with corresponding modes
 # this is for the purpose of this tutorial
-# should be using a database so that new masks are saved and can be added when the bot is still connected
+# should be using a database so that new masks are saved
+# and can be added when the bot is still connected
 masks = dict()
 masks["*"] = "+v" # give voice to everyone
 masks["*!*@op-ip-addr.com"] = "+o" # give op to this ip/domain
@@ -330,20 +346,24 @@ print( vars(mybot) ) # for a full list!
 mybot.ban('#mychan', '*!*@banned-user.com')
 
 mybot.connect() # Connects to mybot.server, and if disconnected it connects to mybot.servers.
-If you don't want to automatically reconnect you can do a simple connect by sending a server parameter: mybot.connect('irc.freenode.net')
+# If you don't want to automatically reconnect,
+# you can do a simple connect by sending a server parameter: mybot.connect('irc.freenode.net')
 # mybot.connect('irc.freenode.net:6668') # or with port
 # mybot.connect('irc.freenode.net:6668 ipv6') # or with port and server specific ipv6
 # mybot.connect('irc.freenode.net ipv4') # or with server specific ipv4
 # mybot.connect('irc.freenode.net password=mypassword') # or with server specific password
 # mybot.connect('irc.freenode.net password=') # or with server specific omitting password
 
-mybot.ctcp('nick', 'VERSION', msg='', reply=False) # Sends a ctcp command. If reply is set to True, it will be a ctcp reply.
+# Sendsa ctcp command. If reply is set to True, it will be a ctcp reply.
+mybot.ctcp('nick', 'VERSION', msg='', reply=False)
 
 mybot.deop('#mychan', 'nick')
 
 mybot.devoice('#mychan', 'nick')
 
-mybot.echo('my message') # Sends text to event handler. Can be used instead of print and handled the same way as other events.
+# Send text to event handler.
+# Can be used instead of print and handled the same way as other events.
+mybot.echo('my message')
 
 mybot.join('#mychan')
 
@@ -353,7 +373,8 @@ mybot.msg('#mychan', 'my message') # First parameter can also be a nick.
 
 mybot.mode('+k', '#mychan', 's3cr3t') # First parameter can also be mybot's nick.
 
-mybot.newnick('newnick') # Send IRC nick command. Changes nick if newnick is available. Current nick is availabe as mybot._nick
+# Send IRC nick command. Changes nick if newnick is available. Current nick is availabe as mybot._nick
+mybot.newnick('newnick')
 
 mybot.notice('#mychan', 'my message') # First parameter can also be a nick.
 
@@ -418,7 +439,9 @@ event.chat # responds to corresponding chat room (either event.nick or event.cha
 
 event.ctcp # the ctcp type (VERSION, ACTION, etc) on CTCP requests/replies
 
-event._connection # is a pointer to the connection of the event, which can be used to access the connection inside functions in separate files from your script:
+# pointer to the connection of the event,
+# which can be used to access the connection inside functions in separate files from your script:
+event._connection
 def myoutsidefunc(event):
     mybot = event._connection
     mybot.quit()
@@ -442,7 +465,8 @@ event.target
 # is the key for the KEY event.
 # is the new nick on the NICK event
 
-event.type # is the raw IRC command of the event, which is usually a capital word (such as JOIN or QUIT), but sometimes a number
+# the raw IRC command of the event, which is usually a capital word (such as JOIN or QUIT), but sometimes a number
+event.type
 
 ```
 

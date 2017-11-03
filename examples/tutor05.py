@@ -24,7 +24,8 @@ def mode(event):
 
 # create a set of masks with corresponding modes
 # this is for the purpose of this tutorial
-# should be using a database so that new masks are saved and can be added when the bot is still connected
+# should be using a database so that new masks are saved
+# and can be added when the bot is still connected
 masks = dict()
 masks["*"] = "+v" # give voice to everyone
 masks["*!*@op-ip-addr.com"] = "+o" # give op to this ip/domain

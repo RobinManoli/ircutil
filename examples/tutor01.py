@@ -9,7 +9,7 @@ import ircutil
 mybot = ircutil.Connection() # create a connection
 
 # bot setup
-mybot.nick = "ezBot" # the bot'snick
+mybot.nick = "ezBot" # the bot's nick
 mybot.server = "irc.freenode.org" # the server to connect to
 
 # handle IRC events

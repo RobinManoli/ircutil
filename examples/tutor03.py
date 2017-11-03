@@ -17,25 +17,30 @@ def autojoin(event):
 # Run the function below on message events, respond when the message is "hi"
 @mybot.trigger(lambda event: event.MSG and event.msg == "hi")
 def respond(event):
-    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    # event.chat is either the channel of the event,
+    # or if it was a private message - the nickname of the user who sent the message
     mybot.msg(chat=event.chat, msg="%s: hi" %event.nick)
 
 # Run the function below on join events except when mybot joins a channel
-# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary,
+# desired nick attempted to use on connect
 @mybot.trigger(lambda event: event.JOIN and event.nick != mybot._nick)
 def greet(event):
     mybot.msg(chat=event.chan, msg="%s: hi" %event.nick)
 
 # Run the function below when mybot is kicked
-# mybot._nick is the actual current nick, whereas mybot.nick is the primary, desired nick attempted to use on connect
+# mybot._nick is the actual current nick, whereas mybot.nick is the primary,
+# desired nick attempted to use on connect
 @mybot.trigger(lambda event: event.KICK and event.target == mybot._nick)
 def rejoin(event):
     mybot.join(event.chan)
 
-# Run the function below when receiving a CTCP request. Also note that CTCP requests are treated as messages, so event.MSG is True too.
+# Run the function below when receiving a CTCP request.
+# Also note that CTCP requests are treated as messages, so event.MSG is True too.
 @mybot.trigger(lambda event: event.CTCP)
 def ctcp_reply(event):
-    # event.chat is either the channel of the event, or if it was a private message - the nickname of the user who sent the message
+    # event.chat is either the channel of the event,
+    # or if it was a private message - the nickname of the user who sent the message
     mybot.ctcp(event.chat, event.ctcp, "my CTCP", reply=True) # do a CTCP reply
     mybot.ctcp(event.chat, event.ctcp) # make a CTCP request
     print(event.chat, "%s just sent a CTCP %s" % (event.nick, event.msg))
