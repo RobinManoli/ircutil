@@ -261,6 +261,7 @@ class Event():
                     # '+soo nick nick2 becomes ['+s', '+o nick','+o nick2']
                     ntarget = 0
                     sign = ''
+                    modes = []
                     for char in self.mode:  
                         if char == '+' or char == '-':
                             # remember if last sign was + or -
@@ -271,14 +272,22 @@ class Event():
                         # check if channel mode is one that uses target, and that target exists
                         if self.chan and mode in 'bvoIelk' and len(self.split) > ntarget + 4:
                             target = self.split[4+ntarget]
-                            #Event(self._connection, ':%s MODE %s %s%s %s' %(self.addr, self.chan, sign, mode, target))
-                            print ( ':%s MODE %s %s%s %s' %(self.addr, self.chan, sign, mode, target) )
+                            raw = ':%s MODE %s %s%s %s' %(self.addr, self.chan, sign, mode, target)
+                            modes.append(raw)
+                            #print(raw)
+                            #Event(self._connection, ':%s MODE %s %s%s %s' %(self.addr, self.chan, sign, mode, target)) # old event handler
                             ntarget += 1
                         else:
-                            #Event(self._connection, ':%s MODE %s %s%s' %(self.addr, self.chat, sign, mode))
-                            print ( ':%s MODE %s %s%s' %(self.addr, self.chat, sign, mode) )
+                            raw = ':%s MODE %s %s%s' %(self.addr, self.chat, sign, mode)
+                            modes.append(raw)
+                            #print(raw)
+                            #Event(self._connection, ':%s MODE %s %s%s' %(self.addr, self.chat, sign, mode)) # old event handler
+
+                    # process all multimodes before handling
+                    for mode in modes:
+                        self.handle(mode)
                     # do not process this multi-mode event any further
-                    #return
+                    return
 
 
             elif self.arg1 == 'NICK':
