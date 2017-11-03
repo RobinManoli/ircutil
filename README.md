@@ -1,7 +1,9 @@
 # Python Ircutil
 Simplistic, powerful and lightweight abstraction of IRC, written in Python.
+
 The point of this utility is to connect to IRC and take you very fast into coding your own stuff.
 The only magic that happens is that Ircutil connects, stays connected (and optionally reconnects).
+
 
 ## Features
 - parses IRC data into easy-to-use event objects
@@ -16,6 +18,7 @@ The only magic that happens is that Ircutil connects, stays connected (and optio
 - works with python 2 and 3
 - simple flood protection
 - can be used both to create bots and clients
+
 
 ## Not Included (Nor Planned)
 - DCC chat/sends
@@ -168,7 +171,7 @@ def imitate(event):
 # connect to IRC
 mybot.connect()
 ```
-A point to notice is that @mybot.trigger(...) adds its function to the end of triggers. In other words a function that is written before another will also trigger before the other.
+
 
 ## Emulating IRC
 When writing an IRC bot or script you usually want to test it often.
@@ -308,6 +311,51 @@ mybot.connect()
 ```
 
 
+## Priority
+Normally the triggers run in the order the are written. The earlier they appear in the script the earlier they trigger.
+In case you want your functions to trigger in another order you can set their priorities.
+The higher the number you set as priority, the earlier that function will trigger.
+
+If you don't set any priority the default value is 0.
+Functions with the same priority will trigger in the order they appear in the script, top first.
+```
+#!/usr/bin/python3
+
+import ircutil
+
+mybot = ircutil.Connection()
+mybot.nick = "ezBot"
+mybot.server = "irc.freenode.org:6665"
+
+@mybot.trigger()
+def raw(event):
+    # See everything from irc server and ircutil
+    print(event.raw)
+
+@mybot.trigger("WELCOME")
+def autojoin(event):
+    mybot.join('#ircutil')
+
+@mybot.trigger("JOIN", priority=10)
+def prio10(event):
+    mybot.msg(event.chat, "prio 10")
+
+@mybot.trigger("JOIN") # default priority is 0
+def prio(event):
+    mybot.msg(event.chat, "prio 0")
+
+@mybot.trigger("JOIN", priority=30)
+def prio30(event):
+    mybot.msg(event.chat, "prio 30")
+
+@mybot.trigger("JOIN", priority=-10)
+def prio_10(event):
+    mybot.msg(event.chat, "prio -10")
+
+mybot.connect()
+```
+
+
 ## Custom Connection Loops
 If you don't want Ircutil to automatically reconnect, send the server parameter:
 ```
@@ -383,7 +431,7 @@ mybot.quit('my message')
 ```
 
 
-## Events
+## Event Booleans
 ```
 print( vars(event) ) # for a full list!
 
@@ -409,14 +457,14 @@ self.PART
 self.PING 
 self.PRIVMSG 
 self.QUIT 
-self.SENT 
+self.SENT # True when Ircutil sent an IRC command
 self.TOPIC 
 self.UNBAN 
 self.VOICE 
 self.WELCOME 
 ```
 
-### IRC Event Data
+## IRC Event Data
 ```
 # the nick!ident@hose of the one who performed the command, or the server currently connected to.
 event.addr
@@ -459,7 +507,7 @@ event.type
 
 ```
 
-### The Channel Objects
+## The Channel Objects
 A Connection contains all joined channels in .chans (such as mybot.chans), where .chans is a dictionary, and the keys are the channel names in lower case.
 Each channel contains a channel object such as this:
 ```
