@@ -286,7 +286,7 @@ class Event():
 
                     # process all multimodes before handling
                     for mode in modes:
-                        print('parsed multimode:', mode)
+                        #print('parsed multimode:', mode) # debug
                         self.handle(mode)
                     # do not process this multi-mode event any further
                     return

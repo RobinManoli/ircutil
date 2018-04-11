@@ -199,6 +199,7 @@ class Connection():
             passwords = [arg.split('=',1)[1] for arg in server_args if arg.startswith('password=')]
 
             self._socket = socket.socket(socket.AF_INET6 if (self.ipv6 and not ipv4) or ipv6 else socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.settimeout(180) # handle ping timeout when server doesn't acknowledge the ping response
             self.echo('Connecting to %s:%d...' % (server, port))
             try:
                 self._socket.connect(( server, port ))
