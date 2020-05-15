@@ -61,8 +61,11 @@ class Event():
                 print(func_or_true(self))
             except TypeError:
                 # not callable
-                end = "" if self.PING else '\n'
-                print(ircutil.colors.BLUE if color else "", now.strftime('%H:%M:%S'), self._connection._server, color, self.raw, ircutil.colors.WHITE if color else '', end=end)
+                end = ' ' if self.PING else '\n'
+                if color:
+                    print(ircutil.colors.BLUE + now.strftime('%H:%M:%S'), self._connection._server, color + self.raw + ircutil.colors.WHITE, end=end)
+                else:
+                    print(now.strftime('%H:%M:%S'), self._connection._server, '->', self.raw, end=end)
 
         if self._connection.raw_colored_output is not None:
             import ircutil.colors
