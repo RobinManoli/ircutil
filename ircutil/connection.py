@@ -65,12 +65,15 @@ class Connection():
 
         self.triggers = [] # list of functions to run on each irc event
         self.prioritized_triggers = dict()
+        self.bgprocesses = [] # list of functions to run when irc is silent
+
         self.eventhandler = self._eventhandler # override this to create custom event handler, that receives sendevent argument from self.send (remember to run self.triggers)
         self._connected = False
         self._emulated = False
         self._welcomed = False # when accepted on server (for nick loop)
         self._chantypes = '#'
 
+        self.socket_timeout = 1 # how many seconds to wait for ircdata before calling background processes
         self._buffer = ''
         self._socket = None
         self.send = Send(self)
@@ -102,35 +105,46 @@ class Connection():
 
     def _loop(self):
         while True:
-            newdata = self._socket.recv(4096)
-            if sys.version_info >= (3,0):
-                try:
-                    newdata = newdata.decode() # fails on certain Swedish chars in ISO-8859-1
-                except UnicodeDecodeError:
+            #self._socket.setblocking(0) # non-blocking, ie timeout is set to 0, not used because it might cause unnecessary processor load
+            self._socket.settimeout( self.socket_timeout ) # set a timeout to be able to do stuff when irc is silent, though this loop works in blocking mode too
+            try:
+                newdata = self._socket.recv(4096)
+                if sys.version_info >= (3,0):
                     try:
-                        # If you don't know the encoding, then to read binary input into string in Python 3 and Python 2 compatible way, use ancient MS-DOS cp437 encoding:
-                        # http://stackoverflow.com/a/27527728/942621
-                        newdata = newdata.decode('cp437') # displays the Swedish chars
-                        #print('cp437', newdata)
-                    except:
-                        raise
-                        #newdata = str(newdata, 'utf-8', 'ignore') # seems to work but removes the Swedish chars
-                        # http://stackoverflow.com/questions/436220/python-is-there-a-way-to-determine-the-encoding-of-text-file
-                        #newdata = unicode(newdata, errors='ignore') #python2?
-            newdata = self._buffer + newdata
+                        newdata = newdata.decode() # fails on certain Swedish chars in ISO-8859-1
+                    except UnicodeDecodeError:
+                        try:
+                            # If you don't know the encoding, then to read binary input into string in Python 3 and Python 2 compatible way, use ancient MS-DOS cp437 encoding:
+                            # http://stackoverflow.com/a/27527728/942621
+                            newdata = newdata.decode('cp437') # displays the Swedish chars
+                            #print('cp437', newdata)
+                        except:
+                            raise
+                            #newdata = str(newdata, 'utf-8', 'ignore') # seems to work but removes the Swedish chars
+                            # http://stackoverflow.com/questions/436220/python-is-there-a-way-to-determine-the-encoding-of-text-file
+                            #newdata = unicode(newdata, errors='ignore') #python2?
+                newdata = self._buffer + newdata
 
-            if not newdata:
-                break
+                if not newdata:
+                    print("no new data, breaking _loop()") # doesn't normally happen? perhaps when connection problems
+                    break
 
-            # split events by \n as EFNet doesn't include \r
-            events = newdata.split('\n')
-            # if received events are complete the last list item is an empty string
-            # otherwise the last list item is an incomplete irc event
-            self._buffer = events.pop()
+                # split events by \n as EFNet doesn't include \r
+                events = newdata.split('\n')
+                # if received events are complete the last list item is an empty string
+                # otherwise the last list item is an incomplete irc event
+                self._buffer = events.pop()
 
-            for event in events:
-                self.eventhandler(event)
-                #Event(self, event)
+                for event in events:
+                    self.eventhandler(event)
+                    #Event(self, event)
+            except BlockingIOError:
+                #print('do stuff when irc is silent') # working when using non-blocking self._socket.setblocking(0)
+                pass
+            except socket.timeout:
+                #print('do stuff when irc is silent')
+                for func in self.bgprocesses:
+                   func()
 
     def emulate(self, file):
         """
@@ -207,7 +221,7 @@ class Connection():
             passwords = [arg.split('=',1)[1] for arg in server_args if arg.startswith('password=')]
 
             self._socket = socket.socket(socket.AF_INET6 if (self.ipv6 and not ipv4) or ipv6 else socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.settimeout(180) # handle ping timeout when server doesn't acknowledge the ping response
+            #self._socket.settimeout(180) # handle ping timeout when server doesn't acknowledge the ping response
             self.echo('Connecting to %s:%d...' % (server, port))
             try:
                 self._socket.connect(( server, port ))
@@ -262,11 +276,17 @@ class Connection():
                 self._server = server
 
 
+    def background(self, func):
+        """
+        @mybot.background() # this decorator adds a function to run when irc is silent
+        """
+        self.bgprocesses.append(func)
+
+
     # decorator
     #def trigger(self, func):
     #    "Adds function as a trigger."
     #    self.triggers.append(func)
-
 
     # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
     def trigger(self, expr=None, priority=0):
