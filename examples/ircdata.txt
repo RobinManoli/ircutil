@@ -7,3 +7,4 @@
 :dude!~dude@some-domain.com PRIVMSG #ircutil :VERSION
 :dude!~dude@some-domain.com TOPIC #ircutil :this is the new topic
 :dude!~dude@some-domain.com PRIVMSG ezBot :ACTION does something
+#:dude!~dude@some-domain.com PRIVMSG #ircutil :hi <--- this line is ignored because it starts with a # character

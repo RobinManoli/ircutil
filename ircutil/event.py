@@ -1,4 +1,4 @@
-#	Copyright 2016 Robin Manoli (r at manoli.se)
+#	Copyright 2016 Robin Manoli - https://github.com/RobinManoli/ircutil
 # 
 #	This file is part of Ircutil.
 #
@@ -108,6 +108,8 @@ class Event():
             if not self._connection._welcomed:
                 self.renick()
 
+        for trigger in self.triggers:
+            trigger(self)
 
 
     def parse(self, raw_event):
@@ -398,9 +400,6 @@ class Event():
             setattr(self, self.type, True)
         ircutil.channel.update( self._connection.chans, self )
 
-
-        for trigger in self.triggers:
-            trigger(self)
 
 """
 IRC REFERENCE

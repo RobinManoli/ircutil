@@ -1,4 +1,4 @@
-#	Copyright 2016 Robin Manoli (r at manoli.se)
+#	Copyright 2016 Robin Manoli - https://github.com/RobinManoli/ircutil
 # 
 #	This file is part of Ircutil.
 #
@@ -97,8 +97,8 @@ class Connection():
 
         self.hostname = 'ircutil' # relevant for irc-servers, not clients
         self.servername = 'ircutil' # relevant for irc-servers, not clients
-        self._version = "Python Ircutil 0.99 Beta"
-        self._author = "Robin Manoli (r at manoli.se)"
+        self._version = "Python Ircutil 1.0.0 Beta"
+        self._author = "Robin Manoli - https://github.com/RobinManoli/ircutil"
 
     def _loop(self):
         while True:

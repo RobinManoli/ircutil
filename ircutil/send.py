@@ -1,4 +1,4 @@
-#	Copyright 2016 Robin Manoli (r at manoli.se)
+#	Copyright 2016 Robin Manoli - https://github.com/RobinManoli/ircutil
 # 
 #	This file is part of Ircutil.
 #
