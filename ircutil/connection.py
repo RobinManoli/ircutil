@@ -58,6 +58,11 @@ class Connection():
         self.chans = {} # keeps records of channel users, topics and modes
         self.autojoin = [] # list of channels to join automatically on connect
 
+        # raw_output
+        self.raw_output = None # lambda event: "my output string: %s" % event.raw 
+        self.raw_colored_output = None # same as above, but colors will be added -- should work on *nix including OS X, linux and windows (provided you use ANSICON, or in Windows 10 provided you enable VT100 emulation) (https://stackoverflow.com/a/287944)
+        self.raw_output_display_motd = False
+
         self.triggers = [] # list of functions to run on each irc event
         self.prioritized_triggers = dict()
         self.eventhandler = self._eventhandler # override this to create custom event handler, that receives sendevent argument from self.send (remember to run self.triggers)
@@ -141,8 +146,10 @@ class Connection():
 
         with open(file) as f:
             for raw_event in f.readlines():
-                # todo: don't strip here, because trailing spaces might matter?
-                raw_event = raw_event.strip()
+                raw_event = raw_event.lstrip()
+                # allow comments in emulation
+                if ( raw_event.startswith('#') ):
+                    continue
                 try:
                     print('Emulating:', raw_event)
                     self._socket = FakeSocket()
@@ -161,7 +168,7 @@ class Connection():
 
         self._emulated = False
         self._socket = None
-                
+
 
     def connect(self, server=''):
         """
@@ -232,6 +239,7 @@ class Connection():
 
         if server:
             #print( 'Connect without loop...' )
+            self._server = server
             do_connect(server)
 
         else:

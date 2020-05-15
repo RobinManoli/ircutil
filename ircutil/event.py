@@ -16,8 +16,14 @@
 #	along with Ircutil.  If not, see <http://www.gnu.org/licenses/>.
 
 import ircutil.channel
+from datetime import datetime
 
 class Event():
+    def __init__(self, connection):
+        self._connection = connection
+        self.send = connection.send
+        self.triggers = connection.triggers
+
     def renick(self):
         nick = self._connection._nick
         if not self._connection.nicks or nick == self._connection.nicks[-1] \
@@ -44,18 +50,74 @@ class Event():
             # :server.addr
             self.host = self.addr
 
-    def __init__(self, connection):
-        self._connection = connection
-        self.send = connection.send
-        self.triggers = connection.triggers
+    def raw_output(self):
+        now = datetime.now() #.strftime('%H:%M:%S')
+
+        if self.MOTD and not self._connection.raw_output_display_motd:
+            return
+
+        def output(func_or_true, color=''):
+            try:
+                print(func_or_true(self))
+            except TypeError:
+                # not callable
+                end = "" if self.PING else '\n'
+                print(ircutil.colors.BLUE if color else "", now.strftime('%H:%M:%S'), self._connection._server, color, self.raw, ircutil.colors.WHITE if color else '', end=end)
+
+        if self._connection.raw_colored_output is not None:
+            import ircutil.colors
+            if self.SENT:
+                # command was sent, not received
+                color = ircutil.colors.VIOLET
+            elif self.ERROR or self.KICK:
+                color = ircutil.colors.RED
+            elif self.NOTICE or self.MSG:
+                color = ircutil.colors.YELLOW
+            elif self.arg1 in ('JOIN', 'PART', 'QUIT'):
+                color = ircutil.colors.BLUE2
+            elif self.arg1 in ('MODE', 'NICK', 'TOPIC'):
+                color = ircutil.colors.GREEN
+            else:
+                color = ircutil.colors.GREY
+            output(self._connection.raw_colored_output, color)
+
+        elif self._connection.raw_output is not None:
+            output(self._connection.raw_output)
+
 
     def handle(self, raw_event):
+        self.parse(raw_event)
+        self.raw_output() # output raw first, so it will not be written after .send() responses
+
+        if self.PING:
+            self.send.pong( self.msg )
+
+        elif self.WELCOME and self._connection.autojoin and isinstance(self._connection.autojoin, list):
+            for chan in self._connection.autojoin:
+                self.send.join(chan)
+
+        elif self.NICK:
+            # todo: this code worked, but was delayed until next ping:
+            self.send.echo("I'm now known as: " + self._connection._nick)
+
+        elif self.CTCP and self.ctcp == 'VERSION':
+            self.send.ctcp( self.chat, 'VERSION', self._connection._version, reply=True )
+
+        elif self.arg1 in ('433', '437'):
+            # :wolfe.freenode.net 437 * myBot :Nick/channel is temporarily unavailable
+            if not self._connection._welcomed:
+                self.renick()
+
+
+
+    def parse(self, raw_event):
         # debug
-        #print()
-        #print(raw_event)
-        #print()
         #import inspect
         #print( 'raw event caller name:', inspect.stack()[1][3], raw_event)
+        #rw = event.raw.encode('string_escape') # repr(event.raw)
+
+        #raw_event = raw_event.rstrip('\r') # remove possible \r (in non EFNet)
+        # clean event data (if it comes from echo it might contains new lines, and also if it's non efnet it contains them)
 
         # https://tools.ietf.org/html/rfc2812 for more
         self.ACTION = False
@@ -73,7 +135,7 @@ class Event():
         self.JOIN = False
         self.KICK = False
         self.MODE = False
-        #self.MOTD = False # not implemented
+        self.MOTD = False
         self.MSG = False
         self.NAMREPLY = False
         self.NICK = False
@@ -89,8 +151,6 @@ class Event():
         self.VOICE = False
         self.WELCOME = False
 
-        #raw_event = raw_event.rstrip('\r') # remove possible \r (in non EFNet)
-        # clean event data (if it comes from echo it might contains new lines, and also if it's non efnet it contains them)
         raw_event = raw_event.replace('\r', '').replace('\n', '')
         self.raw = raw_event
         self.split = raw_event.split()
@@ -132,11 +192,9 @@ class Event():
         self.type = ''
         self.msg = ''
 
-
         if self.arg0 == 'PING':
             self.type = 'PING'
             self.msg = self.arg1
-            self.send.pong( self.msg )
             self.PING = True
 
         elif self.arg0 == '<<<':
@@ -171,10 +229,6 @@ class Event():
                 # :rajaniemi.freenode.net 001 myBotte :Welcome to the freenode Internet Relay Chat Network myBotte
                 self._connection._welcomed = True
                 self.WELCOME = True
-                if self._connection.autojoin and isinstance(self._connection.autojoin, list):
-                    for chan in self._connection.autojoin:
-                        self.send.join(chan)
-
 
             if self.arg1 == '005':
                 # :rajaniemi.freenode.net 005 myBotte CHANTYPES=# EXCEPTS INVEX CHANMODES=eIbq,k,flj,CFLMPQScgimnprstz CHANLIMIT=#:120 PREFIX=(ov)@+ MAXLIST=bqeI:100 MODES=4 NETWORK=freenode KNOCK STATUSMSG=@+ CALLERID=g :are supported by this server
@@ -211,16 +265,14 @@ class Event():
                 self.chat = self.chan
                 self.msg = self.args5
 
-
-            elif self.arg1 in ('433', '437'):
-                # :wolfe.freenode.net 437 * myBot :Nick/channel is temporarily unavailable
-                if not self._connection._welcomed:
-                    self.renick()
-
+            elif self.arg1 == '372':
+                # namreply
+                self.MOTD = True
 
             elif self.arg1 == 'JOIN':
                 self.chan = self.arg2[1:] if self.arg2 and self.arg2[0] == ':' else self.arg2
                 self.chat = self.chan
+                self.JOIN = True
 
 
             elif self.arg1 == 'KICK':
@@ -228,6 +280,7 @@ class Event():
                 self.chat = self.chan
                 self.msg = self.args4
                 self.target = self.arg3
+                self.KICK = True
 
 
             elif self.arg1 == 'MODE':
@@ -236,6 +289,7 @@ class Event():
                 # :nick!ident@example.com MODE #ircutil +p 
                 # :nick!identy@example.com MODE #ircutil +b *!b@z
                 # :ezBot_ MODE ezBot_ :i
+                self.MODE = True
                 self.chan = self.arg2 if self.arg2 and self.arg2[0] in self._connection._chantypes else ''
                 self.chat = self.chan or self.nick
                 self.mode = self.arg3 if self.arg3 and self.arg3[0] == ':' else self.arg3
@@ -300,14 +354,14 @@ class Event():
                 self.target = self.target[1:] if self.target and self.target[0] == ':' else self.target
                 if self.nick == self._connection._nick:
                     self._connection._nick = self.target
-                    # todo: this code worked, but was delayed until next ping:
-                    self.send.echo("I'm now known as: " + self._connection._nick)
+                self.NICK = True
 
 
             elif self.arg1 == 'PART':
                 self.chan = self.arg2
                 self.chat = self.chan
                 self.msg = self.args3
+                self.PART = True
 
 
             elif self.arg1 in ('PRIVMSG', 'NOTICE'):
@@ -324,9 +378,7 @@ class Event():
                     #self.msg = self.msg[1:] if self.msg and self.msg[0] == ':' else self.msg # seems like colon is outside chr(1)
                     if self.arg1 == 'PRIVMSG':
                         self.CTCP = True
-                        if self.ctcp == 'VERSION':
-                            self.send.ctcp( self.chat, 'VERSION', self._connection._version, reply=True )
-                        elif self.ctcp == "ACTION":
+                        if self.ctcp == "ACTION":
                             self.ACTION = True
                     else:
                         self.CTCP_REPLY = True
@@ -335,10 +387,12 @@ class Event():
             elif self.arg1 == 'TOPIC':
                 self.chan = self.arg2
                 self.msg = self.args3
+                self.TOPIC = True
 
 
             elif self.arg1 == 'QUIT':
                 self.msg = self.args2
+                self.QUIT = True
 
         if hasattr(self, self.type):
             setattr(self, self.type, True)
