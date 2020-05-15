@@ -56,6 +56,7 @@ class Connection():
         self.nicks = [] # list of alternative nicks
         self.servers = [] # list of alternative servers with optional ports
         self.chans = {} # keeps records of channel users, topics and modes
+        self.autojoin = [] # list of channels to join automatically on connect
 
         self.triggers = [] # list of functions to run on each irc event
         self.prioritized_triggers = dict()
@@ -205,7 +206,7 @@ class Connection():
                 self._socket.connect(( server, port ))
                 self.echo('Connected!')
                 self._connected = True
-    
+
                 self._nick = self.nick
                 if passwords and passwords[0]:
                     self.send.password( passwords[0] )

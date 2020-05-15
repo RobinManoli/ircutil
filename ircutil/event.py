@@ -105,7 +105,7 @@ class Event():
         self.arg5 = self.split[5] if len(self.split) > 5 else ''
         self.arg6 = self.split[6] if len(self.split) > 6 else ''
         self.arg7 = self.split[7] if len(self.split) > 7 else ''
-        
+
         # get full string of event starting from argX
         self.args1 = raw_event.split(' ', 1)[1] if len(self.split) > 1 else ''
         self.args2 = raw_event.split(' ', 2)[2] if len(self.split) > 2 else ''
@@ -171,6 +171,9 @@ class Event():
                 # :rajaniemi.freenode.net 001 myBotte :Welcome to the freenode Internet Relay Chat Network myBotte
                 self._connection._welcomed = True
                 self.WELCOME = True
+                if self._connection.autojoin and isinstance(self._connection.autojoin, list):
+                    for chan in self._connection.autojoin:
+                        self.send.join(chan)
 
 
             if self.arg1 == '005':
