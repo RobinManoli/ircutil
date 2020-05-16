@@ -209,7 +209,7 @@ def my_background_func():
 How often background functions will be called are based on Python sockets' timeout setting.
 To set the frequency to run every 5 seconds instead, you can use:
 ```
-mybot.socket_timeout = 5
+mybot.socket_timeout = 5 # or you can even use 0.1 to call 10 times per second
 ```
 
 And if you want more control of the order of calling the background processes,
@@ -371,19 +371,19 @@ def autojoin(event):
 
 @mybot.trigger("JOIN", priority=10)
 def prio10(event):
-    mybot.msg(event.chat, "prio 10")
+    mybot.msg(event.chat, "called second - prio 10")
 
 @mybot.trigger("JOIN") # default priority is 0
 def prio(event):
-    mybot.msg(event.chat, "prio 0")
+    mybot.msg(event.chat, "called third - prio 0")
 
 @mybot.trigger("JOIN", priority=30)
 def prio30(event):
-    mybot.msg(event.chat, "prio 30")
+    mybot.msg(event.chat, "called first - prio 30")
 
 @mybot.trigger("JOIN", priority=-10)
 def prio_10(event):
-    mybot.msg(event.chat, "prio -10")
+    mybot.msg(event.chat, "called last - prio -10")
 
 mybot.connect()
 ```
