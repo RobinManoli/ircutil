@@ -66,6 +66,7 @@ class Connection():
         self.triggers = [] # list of functions to run on each irc event
         self.prioritized_triggers = dict()
         self.bgprocesses = [] # list of functions to run when irc is silent
+        self.prioritized_bgprocesses = dict()
 
         self.eventhandler = self._eventhandler # override this to create custom event handler, that receives sendevent argument from self.send (remember to run self.triggers)
         self._connected = False
@@ -153,6 +154,7 @@ class Connection():
         self._emulated = True
         self._nick = self.nick
         self.sort_triggers() # do once before starting
+        self.sort_bgprocesses()
 
         class FakeSocket():
             def send(self, *args):
@@ -202,6 +204,7 @@ class Connection():
         """
 
         self.sort_triggers() # do once before starting
+        self.sort_bgprocesses()
         def do_connect(server):
             import sys
             self.echo( 'Running Python ' + str(sys.version) )
@@ -276,17 +279,28 @@ class Connection():
                 self._server = server
 
 
-    def background(self, func):
+    def background(self, priority=0):
         """
         @mybot.background() # this decorator adds a function to run when irc is silent
         """
-        self.bgprocesses.append(func)
+        #self.bgprocesses.append(func) # no longer used because of priority
+
+        def background_decorator(func):
+            # init list for current priority
+            if priority not in self.prioritized_triggers.keys():
+                self.prioritized_bgprocesses[priority] = []
+            self.prioritized_bgprocesses[priority].append(func)
+        return background_decorator
 
 
-    # decorator
-    #def trigger(self, func):
-    #    "Adds function as a trigger."
-    #    self.triggers.append(func)
+    def sort_bgprocesses(self):
+        priorities = sorted( self.prioritized_bgprocesses.keys(), reverse=True )
+        for prio in priorities:
+            self.bgprocesses += self.prioritized_bgprocesses[prio]
+            #print('added prio, len:', prio, len(self.prioritized_triggers[prio])) # debug
+        #print()
+        #print( len(self.triggers), 'triggers' ) # debug
+
 
     # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
     def trigger(self, expr=None, priority=0):

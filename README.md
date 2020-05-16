@@ -192,7 +192,42 @@ sed -i -e "s/ezBot \:VERSION/ezBot \:\x01VERSION\x01/" ircdata.txt
 You can find the code in examples/tutor03.py.
 
 
-## User and server setup and data
+## Background Processing
+If you are coding a bot and want it to output something after a specific amount of time,
+you might need background processing.
+Using time.sleep() might work in some cases, but it would stop all other processing,
+and sometimes it could even disconnect your bot with a ping timeout.
+
+This problem is solved using the @background decorator:
+```
+@mybot.background()
+def my_background_func():
+    # this function will be called every second by default
+    ...
+```
+
+How often background functions will be called are based on Python sockets' timeout setting.
+To set the frequency to run every 5 seconds instead, you can use:
+```
+mybot.socket_timeout = 5
+```
+
+And if you want more control of the order of calling the background processes,
+you can use priority in the same way as for triggers:
+```
+@mybot.background()
+def my_background_func():
+    # this function will be called last, since default priority is 0
+    print('priority 0 - default')
+
+@mybot.background(priority=10)
+def my_background_func2():
+    # this function will be called first, since it has the highest priority
+    print('priority 10')
+
+```
+
+## User and Server Setup and Data
 Example code from examples/tutor04.py:
 ```
 #!/usr/bin/python3
