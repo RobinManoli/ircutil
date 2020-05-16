@@ -287,19 +287,20 @@ class Connection():
 
         def background_decorator(func):
             # init list for current priority
-            if priority not in self.prioritized_triggers.keys():
+            if priority not in self.prioritized_bgprocesses.keys():
                 self.prioritized_bgprocesses[priority] = []
             self.prioritized_bgprocesses[priority].append(func)
+            #print( self.prioritized_bgprocesses ) # debug
         return background_decorator
 
 
     def sort_bgprocesses(self):
+        print( self.prioritized_bgprocesses )
         priorities = sorted( self.prioritized_bgprocesses.keys(), reverse=True )
         for prio in priorities:
             self.bgprocesses += self.prioritized_bgprocesses[prio]
-            #print('added prio, len:', prio, len(self.prioritized_triggers[prio])) # debug
-        #print()
-        #print( len(self.triggers), 'triggers' ) # debug
+        print()
+        print( len(self.bgprocesses), 'bgprocesses', self.bgprocesses, self.prioritized_bgprocesses ) # debug
 
 
     # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
