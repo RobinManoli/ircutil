@@ -295,12 +295,12 @@ class Connection():
 
 
     def sort_bgprocesses(self):
-        print( self.prioritized_bgprocesses )
+        #print( self.prioritized_bgprocesses )
         priorities = sorted( self.prioritized_bgprocesses.keys(), reverse=True )
         for prio in priorities:
             self.bgprocesses += self.prioritized_bgprocesses[prio]
-        print()
-        print( len(self.bgprocesses), 'bgprocesses', self.bgprocesses, self.prioritized_bgprocesses ) # debug
+        #print()
+        #print( len(self.bgprocesses), 'bgprocesses', self.bgprocesses, self.prioritized_bgprocesses ) # debug
 
 
     # https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
