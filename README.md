@@ -254,7 +254,7 @@ mybot.autojoin = ['#mychan1', '+mychan2'] # join these channels automatically
 #mybot.raw_output = True # automatically display everything from irc
 #mybot.raw_output = lambda event: "my output string: %s" % event.raw # display everything in a custom format
 #mybot.raw_colored_output = True # same as above, but colors will be added -- should work on *nix including OS X, linux and windows (provided you use ANSICON, or in Windows 10 provided you enable VT100 emulation) (https://stackoverflow.com/a/287944)
-#self.raw_output_display_motd = False # whether to display motd when using above functions
+#mybot.raw_output_display_motd = False # whether to display motd when using above functions
 
 # --- triggers ---
 
